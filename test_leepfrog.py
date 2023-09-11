@@ -1,5 +1,5 @@
 fginwfnf
 gwnigwgnw
-def fegje() 
-   nwiegn
+def fegje():
+   return 0
 print("")
