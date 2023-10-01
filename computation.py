@@ -107,7 +107,7 @@ def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h:
     for i in range(last_idx):
         if scheme_coords[i]!=0:
             P_arr[i] = P(ax,i, scheme_coords[:last_idx])
-
+    #print(P_arr)
 
     for _ in range(STEPS):
         C = fill_C(u1,u2,dots_arr,P_arr)
@@ -149,39 +149,3 @@ if __name__ == '__main__':
     start = time.time()
     _, U3_test2 = scheme_step(U2, U2_test2, test_scheme, r, h, 1000)
     print(time.time() - start, U3_test2[:10])
-
-"""
-def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h: float, STEPS: int = 1):
-    u3 = np.zeros(u1.size)
-    ax_arr = np.zeros(u3.size)
-    scheme_coords_arr = [0]*u3.size
-    dots_arr = np.zeros((u3.size, 4), dtype=int)
-    for i in range(u3.size):
-        dots_arr[i] = np.arange(i-2, i+2, dtype=int)
-    coords_arr = np.stack(((dots_arr +r)*h, (dots_arr)*h, (dots_arr - r)*h))
-    dots_arr %= u3.size
-    for i in range(u3.size):
-        scheme_coords_arr[i] = coords_arr[:, i][scheme]#теперь это одномерные массивы
-        ax_arr[i] = scheme_coords_arr[i][-1]
-        scheme_coords_arr[i] = scheme_coords_arr[i][:-1]
-
-    for _ in range(STEPS):
-        for i in range(u3.size):
-            dots = dots_arr[i]
-            scheme_coords = scheme_coords_arr[i]
-            ax = ax_arr[i]
-            u_12 = np.array([u1[dots], u2[dots]])
-            scheme_u = u_12[scheme[:-1]]
-            C = 0
-            for j in range(scheme_u.size):
-                 C += scheme_u[j]*P(ax, j, scheme_coords)
-            u3_dots = dots[scheme[-1]]
-            if u3_dots.size == 1:
-                u3[u3_dots[0]] = C
-            else:
-                #TODO: слау
-                u3[u3_dots[-1]] = C
-        u1 = np.copy(u2)
-        u2 = np.copy(u3)
-    return u1, u2
-"""

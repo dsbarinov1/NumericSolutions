@@ -19,6 +19,35 @@ def click_wrapper(window):
     return onclick
 
 
+def draw_scheme_area(ax, mini_mode=False, scheme=None):
+    ax.set_xticks([-0.45, 0, 1, 2, 3, 3.45])
+    ax.set_yticks([-0.45, 0, 1, 2, 2.45])
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    if not mini_mode:
+        ax.set_xticklabels(["", "i-2", "i-1", "i", "i+1", ""], fontsize=16)
+        ax.set_yticklabels(["", "n-1", "n", "n+1", ""], fontsize=16)
+        ax.tick_params(left=False, bottom=False)
+        for i in range(0, 3):
+            ax.axhline(i, color='black')
+        for i in range(0, 4):
+            ax.axvline(i, color='black')
+    else:
+        ax.set_xticklabels(["", "", "", "", "", ""], fontsize=4)
+        ax.set_yticklabels(["", "", "", "", ""], fontsize=4)
+        ax.tick_params(left=False, bottom=False)
+        for i in range(0, 3):
+            ax.axhline(i, color='black', linewidth=0.5, alpha=0.6)
+        for i in range(0, 4):
+            ax.axvline(i, color='black', linewidth=0.5, alpha=0.6)
+        if scheme is not None:
+            for (j, i), flag in np.ndenumerate(scheme):
+                if flag:
+                    drawObject = Circle((i, j), radius=0.2, fill=True, color="black")
+                    ax.add_patch(drawObject)
+
 class ChildWindow():
     def __init__(self, window, parent, destiny, idx):
         self.destiny = destiny
@@ -52,19 +81,7 @@ class ChildWindow():
         fig = plt.figure()
         fig.canvas.mpl_connect('button_press_event', click_wrapper(self))
         ax = plt.gca()
-        ax.set_xticks([-0.45, 0, 1, 2, 3, 3.45])
-        ax.set_yticks([-0.45, 0, 1, 2, 2.45])
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['bottom'].set_visible(False)
-        ax.spines['left'].set_visible(False)
-        ax.set_xticklabels(["", "i-2", "i-1", "i", "i+1", ""], fontsize=16)
-        ax.set_yticklabels(["", "n-1", "n", "n+1", ""], fontsize=16)
-        ax.tick_params(left=False, bottom=False)
-        for i in range(0,3):
-            ax.axhline(i, color='black')
-        for i in range(0,4):
-            ax.axvline(i, color='black')
+        draw_scheme_area(ax)
         self.canvas = FigureCanvasTkAgg(fig, master=self.f_mid)
         self.canvas.get_tk_widget().pack(side=tkinter.TOP,  expand=0, padx=5, pady=5)
         self.canvas._tkcanvas.pack(side=tkinter.TOP,  expand=0, padx=5, pady=5)

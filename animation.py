@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
 from matplotlib.widgets import Button
-path_to_image = ".\\images\\add.png"
+#path_to_image = ".\\images\\add.png"
 j = 0
 r = 0.8
 h = 0.1
@@ -11,7 +11,7 @@ X_MAX = 30
 XLIM = (0, X_MAX)
 YLIM = (-0.5, 1.5)
 
-stock_img = plt.imread(path_to_image)
+#stock_img = plt.imread(path_to_image)
 fig, axs = plt.subplots(2, 2)
 fig.tight_layout(pad=2.0)
 lines = []
@@ -29,10 +29,12 @@ for ax in axs[0]:
         help_lines.append(help_line_2)
         steps_text = ax.text(0.02, 0.8, '', transform=ax.transAxes)
         steps_texts.append(steps_text)
+"""
 for ax in axs[1]:
     ax.axis('off')
     ax.set(xlim=(0, stock_img.shape[1]), ylim=(stock_img.shape[0], 0))
     ax.imshow(stock_img, origin="upper")
+"""
 for i in range(len(names)):
     axs[0][i].title.set_text(names[i])
 X = np.linspace(0, X_MAX, int(X_MAX/h))
@@ -83,8 +85,6 @@ bup = Button(axup, 'steps++')
 bup.on_clicked(up)
 bdown = Button(axdown, 'steps--')
 bdown.on_clicked(down)
-
-    # call the animator.  blit=True means only re-draw the parts that have changed.
 anim = animation.FuncAnimation(fig, animate, init_func=init,
                                    frames=200, interval=20, blit=True)
 plt.show()
