@@ -24,7 +24,7 @@ def resource_path(relative_path):#для того чтобы экзешник н
 
 
 iteration_counter = 0
-r = 0.8
+r = 0.5
 h = 0.1
 X_MAX = 30
 XLIM = (0, X_MAX)
@@ -38,7 +38,7 @@ lines = [None]*4
 help_lines = [[],[],[],[]]
 steps_texts = [None]*4
 plt_buttons = [None]*4
-X = np.linspace(0, X_MAX, int(X_MAX/h))
+X = np.linspace(0, X_MAX, int(X_MAX/h), dtype=float)
 U1_arr = [double_gauss_func(X, B, SIGMA, SHIFT)]*4
 U2_arr = [double_gauss_func(X, B, SIGMA, SHIFT)]*4
 STEPS = SAVED_STEPS = 1
@@ -154,6 +154,8 @@ def go_to_iteration(entry):#переход к итерации
             U1_arr[i], U2_arr[i] = scheme_step(U1_arr[i], U2_arr[i], SCHEMES[i], r, h, steps_to_target)
             lines[i].set_data(X, U2_arr[i])
     iteration_counter = target_iteration
+    if not IS_RUNNING:
+        stop_resume()
 
 
 def set_r_h(entry_r, entry_h):#для установки числа Куранта и шага
@@ -166,7 +168,7 @@ def set_r_h(entry_r, entry_h):#для установки числа Курант
     start()
 
 
-def change_mode(button):
+def change_mode(button):#меняет режим добавления и удаления схем
     global DELETE_MODE
     DELETE_MODE = not DELETE_MODE
     if DELETE_MODE:
@@ -237,7 +239,7 @@ class MainWindow(tkinter.Frame):#основное окошко
         for obj in [r_button, r_entry, h_entry]:
             obj.pack(padx=5, side=tkinter.LEFT)
 
-    def plot (self):#создание графиков в окне
+    def plot(self):#создание графиков в окне
         global fig
         cid = fig.canvas.mpl_connect('button_press_event', click_wrapper(self))
         # fig.canvas.mpl_disconnect(cid)
@@ -311,12 +313,3 @@ if __name__ == '__main__':
                                    frames=None, interval=20, blit=False)
     anim.pause()
     main()
-
-"""
-toolbar = NavigationToolbar2Tk(canvas, frame_top)
-toolbar.update()
-
-tool = tk.Button(toolbar, text="my tool")
-tool.pack(side='left')#, fill='x', expand=True)
-
-"""

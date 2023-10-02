@@ -1,13 +1,15 @@
 import numpy as np
-from numba import jit, float32, boolean, int32
-
+from numba import jit, float64, boolean, int32, int64
+import scipy
 B = 3.0
 SIGMA = 1.0
 SHIFT = 4.0
 
-
+@jit('float64[:](float64[:], float64, float64, float64)', nopython=True)
 def double_gauss_func(x, B, SIGMA, SHIFT):
-    return (np.exp( -0.5 * np.power(((x - B)/SIGMA), 2.0)) + np.exp( -0.5 * pow(((x - B - SHIFT)/SIGMA), 2.0)))
+    g1 = np.divide(np.subtract(x,B),SIGMA)
+    g2 = np.divide(np.subtract(x, B+SHIFT), SIGMA)
+    return np.exp( -0.5 * np.power(g1, 2.0)) + np.exp( -0.5 * np.power(g2, 2.0))
 
 
 def P_2(x,a,b,c):
@@ -56,7 +58,7 @@ def stairs_step(u1, u2, r, h,STEPS=1):
     return u1, u2
 
 
-#святой говнокод
+#святой говнокод(зато понятно нумбе)
 @jit('float64(float64, int64, float64[:])', nopython=True)
 def P(x: float, idx: int, coords: np.ndarray)->float:
     res = 1
@@ -69,7 +71,7 @@ def P(x: float, idx: int, coords: np.ndarray)->float:
     return res
 
 
-@jit('float64[:](float64[:], float64[:], int32[:,:], float64[:])', nopython=True, parallel=True)
+@jit('float64[:](float64[:], float64[:], int64[:,:], float64[:])', nopython=True, parallel=True)
 def fill_C(u1: np.ndarray, u2: np.ndarray, dots_arr: np.ndarray, P_arr: np.ndarray)->np.ndarray:
     C = np.zeros(u1.size)
     for i in range(C.size):
@@ -82,22 +84,38 @@ def fill_C(u1: np.ndarray, u2: np.ndarray, dots_arr: np.ndarray, P_arr: np.ndarr
     return C
 
 
+@jit('int64[:,:](int64)', nopython=True, parallel=True)
+def fill_dots_arr(n: int)->np.ndarray:
+    dots_arr = np.zeros((n, 4), dtype=int64)
+    for i in range(n):
+        dots_arr[i] = np.arange(i - 2, i + 2, dtype=int64) % n
+    return dots_arr
+
+
+@jit('float64[:,:](int64, int64, float64[:])', nopython=True, parallel=True)
+def fill_matrix(n: int, u_shift: int, u3_P: np.ndarray)->np.ndarray:
+    u_matrix = np.zeros((n, n), dtype=float64)
+    for i in range(n):
+        for k in range(5):
+            u_matrix[i, i - 2 + k] = -u3_P[k]
+        u_matrix[i, i+u_shift] = 1
+    return u_matrix
+
+
 #@jit('UniTuple(float64[:], 2)(float64[:], float64[:], boolean[:,:], float64, float64, int64)',nopython=True)
-def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h: float, STEPS: int = 1):
+def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h: float, STEPS: int = 1)->tuple[np.ndarray, np.ndarray]:
     u3 = np.zeros(u1.size)
-    dots_arr = np.zeros((u3.size, 4), dtype=int)
-    for i in range(u3.size):
-        dots_arr[i] = np.arange(i-2, i+2, dtype=int)%u3.size
-    initial_dots = np.arange(1, 5, dtype=int)
+    dots_arr = fill_dots_arr(u3.size)
+    initial_dots = np.arange(1, 5, dtype=np.int64)
     level_modifications = [r,0,-r]
-    scheme_coords = np.zeros(initial_dots.size * 3, dtype=float)
-    P_arr = np.zeros(initial_dots.size * 3, dtype=float)
+    scheme_coords = np.zeros(initial_dots.size * 3, dtype=np.float64)
+    P_arr = np.zeros(initial_dots.size * 3, dtype=np.float64)
     third_level_cnt = 0
     for i in range(3):
         for j in range(initial_dots.size):
             if scheme[i,j]:
                 scheme_coords[initial_dots.size*i+j] = (initial_dots[j]+level_modifications[i])*h
-                if i==3:
+                if i==2:
                     third_level_cnt+=1
     ax = 0
     last_idx = scheme_coords.size-1
@@ -108,16 +126,23 @@ def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h:
         if scheme_coords[i]!=0:
             P_arr[i] = P(ax,i, scheme_coords[:last_idx])
     #print(P_arr)
-
-    for _ in range(STEPS):
-        C = fill_C(u1,u2,dots_arr,P_arr)
-        if third_level_cnt == 1:
-                u3 = C
-        else:
-                #TODO: слау
-                u3 = C
-        u1 = np.copy(u2)
-        u2 = np.copy(u3)
+    shift_arr = [-2, -1, 0, 1]
+    u_shift = shift_arr[last_idx-8]
+    if third_level_cnt == 1:
+        for _ in range(STEPS):
+            C = fill_C(u1, u2, dots_arr, P_arr)
+            u3 = np.roll(C, u_shift)
+            u1 = np.copy(u2)
+            u2 = np.copy(u3)
+    else:
+        u_matrix = fill_matrix(u3.size, u_shift, P_arr[8:])
+        for step in range(STEPS):
+            C = fill_C(u1,u2,dots_arr,P_arr)
+            #u3 = scipy.linalg.solve_banded(u_matrix, C)
+            u3 = np.linalg.solve(u_matrix, C)
+            #print(u3)
+            u1 = np.copy(u2)
+            u2 = np.copy(u3)
     return u1, u2
 
 
