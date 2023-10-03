@@ -24,7 +24,7 @@ def resource_path(relative_path):#для того чтобы экзешник н
 
 
 iteration_counter = 0
-r = 0.5
+r = 0.45
 h = 0.1
 X_MAX = 30
 XLIM = (0, X_MAX)

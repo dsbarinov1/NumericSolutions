@@ -1,6 +1,5 @@
 import numpy as np
 from numba import jit, float64, boolean, int32, int64
-import scipy
 B = 3.0
 SIGMA = 1.0
 SHIFT = 4.0
@@ -117,8 +116,9 @@ def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h:
                 scheme_coords[initial_dots.size*i+j] = (initial_dots[j]+level_modifications[i])*h
                 if i==2:
                     third_level_cnt+=1
-    ax = 0
     last_idx = scheme_coords.size-1
+    ax = scheme_coords[last_idx]
+    #print(scheme_coords)
     while(ax == 0):
         last_idx-=1
         ax = scheme_coords[last_idx]
@@ -146,6 +146,15 @@ def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h:
     return u1, u2
 
 
+def test_method(func, ret_cnt, args):
+    start = time.time()
+    if ret_cnt == 1:
+        u_test = func(*args)
+    elif ret_cnt == 2:
+        _, u_test = func(*args)
+    print(time.time() - start, u_test[:5])
+
+
 if __name__ == '__main__':
     import time
     r = 0.8
@@ -153,24 +162,16 @@ if __name__ == '__main__':
     X_MAX = 30
     X = np.linspace(0, X_MAX, int(X_MAX/h))
     U2 = double_gauss_func(X, B, SIGMA, SHIFT)
-    start = time.time()
-    U2_test1 = laying_L(U2,r, h, 1000)
-    print(time.time() - start, U2_test1[:10])
-    test_scheme = np.array([[False, False, False, False],
-       [ True,  True,  True, False],
-       [False, False,  True, False]])
-    start = time.time()
-    _, U2_test2 = scheme_step(U2, U2, test_scheme, r, h, 1000)
-    print(time.time() - start, U2_test2[:10])
+    test_scheme1 = np.array([[False, False, False, False],
+                            [True, True, True, False],
+                            [False, False, True, False]])
+    test_method(laying_L, 1, [U2, r, h, 1000])
+    test_method(scheme_step, 2, [U2, U2, test_scheme1, r, h, 1000])
 
-    start = time.time()
     U1_test2 = U2
     U2_test2 = laying_L(U2, r, h, 1)
-    _, U3_test2 = stairs_step(U1_test2, U2_test2, r, h, 1000)
-    print(time.time() - start, U3_test2[:10])
-    test_scheme = np.array([[ True,  True,  True, False],
+    test_scheme2 = np.array([[ True,  True,  True, False],
                             [False,  True,  True, False],
                             [False, False,  True, False]])
-    start = time.time()
-    _, U3_test2 = scheme_step(U2, U2_test2, test_scheme, r, h, 1000)
-    print(time.time() - start, U3_test2[:10])
+    test_method(stairs_step, 2, [U1_test2, U2_test2, r, h, 1000])
+    test_method(scheme_step, 2, [U2, U2_test2, test_scheme2, r, h, 1000])
