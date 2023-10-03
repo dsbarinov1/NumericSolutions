@@ -13,6 +13,7 @@ def double_gauss_func(x, B, SIGMA, SHIFT):
 
 
 #святой говнокод(зато понятно нумбе)
+#Автоматическое заполнение P для метода прогонки
 @jit('float64(float64, int64, float64[:])', nopython=True)
 def P(x: float, idx: int, coords: np.ndarray)->float:
     res = 1
@@ -25,6 +26,7 @@ def P(x: float, idx: int, coords: np.ndarray)->float:
     return res
 
 
+#вычисление части, не зависящей от точек на верхнем слое в методе обратной характеристики
 @jit('float64[:](float64[:], float64[:], int64[:,:], float64[:])', nopython=True, parallel=True)
 def fill_C(u1: np.ndarray, u2: np.ndarray, dots_arr: np.ndarray, P_arr: np.ndarray)->np.ndarray:
     C = np.zeros(u1.size)
@@ -38,6 +40,7 @@ def fill_C(u1: np.ndarray, u2: np.ndarray, dots_arr: np.ndarray, P_arr: np.ndarr
     return C
 
 
+#просто индексы точек по x, которых мы рассматриваем на каждом шаге
 @jit('int64[:,:](int64)', nopython=True, parallel=True)
 def fill_dots_arr(n: int)->np.ndarray:
     dots_arr = np.zeros((n, 4), dtype=int64)
@@ -46,6 +49,7 @@ def fill_dots_arr(n: int)->np.ndarray:
     return dots_arr
 
 
+#если точек на верхнем слое больше одной, придется решать слау, заполнение ее матрицы
 @jit('float64[:,:](int64, int64, float64[:])', nopython=True, parallel=True)
 def fill_matrix(n: int, u_shift: int, u3_P: np.ndarray)->np.ndarray:
     u_matrix = np.zeros((n, n), dtype=float64)
@@ -56,6 +60,8 @@ def fill_matrix(n: int, u_shift: int, u3_P: np.ndarray)->np.ndarray:
     return u_matrix
 
 
+#Основная функция для метода обратной характеристики
+#Не включайте jit, из-за него в неявных методах откуда-то возникают Nan
 #@jit('UniTuple(float64[:], 2)(float64[:], float64[:], boolean[:,:], float64, float64, int64)',nopython=True)
 def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h: float, STEPS: int = 1)->tuple[np.ndarray, np.ndarray]:
     u3 = np.zeros(u1.size)
@@ -101,6 +107,7 @@ def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h:
     return u1, u2
 
 
+#Для отдельного тестирования запустите сам файл computation.py
 if __name__ == '__main__':
     import time
     r = 0.8

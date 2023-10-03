@@ -4,8 +4,10 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.patches import Circle
 
-def click_wrapper(window):
+def click_wrapper(window):#обраотка нажатий на график
     def onclick(event):
+        if event.xdata is None or event.ydata is None:
+            return
         ix = round(event.xdata)
         iy = round(event.ydata)
         window.scheme[iy, ix] = not window.scheme[iy, ix]
@@ -19,7 +21,7 @@ def click_wrapper(window):
     return onclick
 
 
-def draw_scheme_area(ax, mini_mode=False, scheme=None):
+def draw_scheme_area(ax, mini_mode=False, scheme=None):#оформление сетки для отображения схемы
     ax.set_xticks([-0.45, 0, 1, 2, 3, 3.45])
     ax.set_yticks([-0.45, 0, 1, 2, 2.45])
     ax.spines['top'].set_visible(False)
@@ -48,9 +50,8 @@ def draw_scheme_area(ax, mini_mode=False, scheme=None):
                     drawObject = Circle((i, j), radius=0.2, fill=True, color="black")
                     ax.add_patch(drawObject)
 
-class ChildWindow():
-    def __init__(self, window, parent, destiny, idx):
-        self.destiny = destiny
+class SchemeWindow():#окно выбора схемы
+    def __init__(self, window, parent, idx):
         self.idx = idx
         self.root = window
         self.window = window
@@ -65,8 +66,7 @@ class ChildWindow():
             [False, False, False, False],
             [False, False, False, False]
             ])
-        self.initUI(destiny)
-
+        self.initUI()
 
 
     def choose_scheme(self):
@@ -75,7 +75,7 @@ class ChildWindow():
         self.on_closing()
 
 
-    def initUI(self, destiny):
+    def initUI(self):
         f_button = tkinter.Button(self.f_top, text="Применить", width=15, command=self.choose_scheme)
         f_button.pack(padx=5, side=tkinter.LEFT)
         fig = plt.figure()
@@ -87,14 +87,13 @@ class ChildWindow():
         self.canvas._tkcanvas.pack(side=tkinter.TOP,  expand=0, padx=5, pady=5)
 
 
-
     def on_closing(self):
         self.parent.destroy_child(self.idx)
         #plt.figure(self.idx + 1).clear()
         self.window.destroy()
 
 
-    def format_cheme(self):
+    def format_cheme(self):#когда схема выбрана, надо ее правильно поместить для функции расчета
         while(np.any(self.scheme[-1,:]) == False):
             for i in range(self.scheme.shape[0]-1, 0, -1):
                 self.scheme[i]=np.copy(self.scheme[i-1])

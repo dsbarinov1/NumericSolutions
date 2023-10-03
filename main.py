@@ -10,7 +10,7 @@ from functools import partial
 import sys
 from matplotlib import animation
 from computation import double_gauss_func,laying_L,stairs_step, B, SIGMA, SHIFT, scheme_step
-from child_windows import ChildWindow, draw_scheme_area
+from child_windows import SchemeWindow, draw_scheme_area
 import os
 
 
@@ -178,7 +178,7 @@ def change_mode(button):#меняет режим добавления и уда�
     button.configure(text=b_text)
 
 
-def click_wrapper(window):#обработка нажатия на график, если к нему еще не прикреплена схема
+def click_wrapper(window):#обработка нажатия на график
     def onclick(event):
         global DELETE_MODE
         if event.inaxes:
@@ -252,39 +252,42 @@ class MainWindow(tkinter.Frame):#основное окошко
         self.canvas._tkcanvas.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=0)
 
 
-    def choose_function(self):
+    def choose_function(self):#еще не реализовано
+        pass
+        """
         if not self.childWindows[0]:
             self.childWindows[0] = tkinter.Toplevel(self.parent)
-            w = ChildWindow(self.childWindows[0], self, "function", 0)
+            w = ChildWindow(self.childWindows[0], self, 4)
             self.childWindows[0].protocol("WM_DELETE_WINDOW", w.on_closing)
         else:
             self.childWindows[0].deiconify()
+        """
 
 
-    def choose_scheme(self, idx):
+    def choose_scheme(self, idx):#открытие окошка для выбора схемы
         global IS_RUNNING
         if IS_RUNNING:
             stop_resume()
         if not self.childWindows[idx]:
             self.childWindows[idx] = tkinter.Toplevel(self.parent)
-            w = ChildWindow(self.childWindows[idx], self, "scheme", idx)
+            w = SchemeWindow(self.childWindows[idx], self, idx)
             self.childWindows[idx].protocol("WM_DELETE_WINDOW", w.on_closing)
         else:
             self.childWindows[idx].deiconify()
 
 
-    def destroy_child(self,idx):
+    def destroy_child(self,idx):#убийство ребенка, бугага(он вызывает этот метод у родителя когда самовыпиливается)
         self.childWindows[idx] = None
 
 
-    def set_scheme(self, scheme, idx):
+    def set_scheme(self, scheme, idx):#выбор схемы для графика
         global SCHEMES
         self.schemes[idx] = scheme
         SCHEMES[idx] = scheme
         start()
 
 
-    def remove_scheme(self, idx):
+    def remove_scheme(self, idx):#удаление схемы у графика
         global SCHEMES
         self.schemes[idx] = None
         SCHEMES[idx] = None
