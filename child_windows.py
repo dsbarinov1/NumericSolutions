@@ -1,8 +1,12 @@
 import tkinter
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.patches import Circle
+from tkinter import ttk
+from start_functions import *
 
 def click_wrapper(window):#обраотка нажатий на график
     def onclick(event):
@@ -49,6 +53,7 @@ def draw_scheme_area(ax, mini_mode=False, scheme=None):#оформление с�
                 if flag:
                     drawObject = Circle((i, j), radius=0.2, fill=True, color="black")
                     ax.add_patch(drawObject)
+
 
 class SchemeWindow():#окно выбора схемы
     def __init__(self, window, parent, idx):
@@ -105,38 +110,99 @@ class SchemeWindow():#окно выбора схемы
 
 
 
-    """
-        sf = ScrolledFrame(self.root, width=570, height=570)
-        sf.pack(side="top", expand=1, fill="both")
-        sf.bind_arrow_keys(self.root)
-        sf.bind_scroll_wheel(self.root)
-        inner_frame = sf.display_widget(Frame)
+class StartConfigurationWindow():
+    def __init__(self, window, parent, idx):
+        self.idx = idx
+        self.root = window
+        self.window = window
+        self.parent = parent
+        self.f_names = [u'Гауссиан', u'Двойной Гауссиан', u'Ступенька', u'Треугольник']
+        self.functions = [gauss_func, double_gauss_func, step_func, triangle_func]
+        self.init_child()
 
-        row = 2
-        for scheme in scheme_dict:
-            if scheme_dict[scheme][1] is not None:
-                image = scheme_dict[scheme][1]
-            else:
-                image =unknown_image
-            img = plt.imread(image)
-            fig = plt.figure(row)
-            ax = plt.gca()
-            ax.axis('off')
-            ax.set(xlim=(0, 50), ylim=(50, 0))
-            ax.imshow(img, origin="upper")
-            canvas = FigureCanvasTkAgg(fig, master=inner_frame)
-            canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=0)
-            canvas._tkcanvas.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=0)
-            """
-    """
-            button = Button(inner_frame, text=scheme, compound=tkinter.LEFT,
-                            command=partial(self.choose_scheme, scheme))
 
-            button.grid(row=row,
-                       column=0,
-                       padx=4,
-                       pady=4)"""
-    """
-            row+=1
-            
-    """
+    def draw_graph(self, func):
+        d = round(self.scale_par.get(), 1)
+        if self.draw_flag == False:
+            self.graphs_x = np.linspace(0, 10, 1001)
+            graph_val = [func(d, x) for x in self.graphs_x]
+            fig = Figure(figsize=(3.4, 2.5), dpi=100)
+            ax = fig.add_subplot()
+            ax.plot(self.graphs_x, graph_val, "-r", linewidth=3)
+            ax.grid(color='black', linewidth=0.5)
+            ax.set_title(f'{self.combobox.get()}')
+
+            self.fig_canvas = FigureCanvasTkAgg(fig, master=self.window)
+            NavigationToolbar2Tk(self.fig_canvas)
+            self.fig_canvas.get_tk_widget().place(x=2, y=2)
+            self.draw_flag = True
+        else:
+            graph_val = [func(d, x) for x in self.graphs_x]
+            fig = Figure(figsize=(3.4, 2.5), dpi=100)
+            ax = fig.add_subplot()
+            ax.plot(self.graphs_x, graph_val, "-r", linewidth=3)
+            ax.grid(color='black', linewidth=0.5)
+            ax.set_title(f'{self.combobox.get()}')
+            self.fig_canvas = FigureCanvasTkAgg(fig, master=self.window)
+            self.fig_canvas.get_tk_widget().place(x=2, y=2)
+
+    def clear_my_draw(self):
+        for item in self.fig_canvas.get_tk_widget().find_all():
+            self.fig_canvas.get_tk_widget().delete(item)
+
+
+    def btn_apply_func(self):
+        self.label_just_d.destroy()
+        label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 11))
+        label_just_d.place(x=460, y=210)
+
+        self.clear_my_draw()
+        f_idx = self.f_names.index(self.combobox.get())
+        self.draw_graph(self.functions[f_idx])
+
+
+    def btn_ok_func(self):
+        f_idx = self.f_names.index(self.combobox.get())
+        d = round(self.scale_par.get(), 1)
+        self.parent.set_function(self.functions[f_idx], d)
+        self.on_closing()
+
+
+    def on_closing(self):
+        self.parent.destroy_child(self.idx)
+        self.window.destroy()
+
+
+    def init_child(self):
+        self.window.geometry("700x385+600+300")
+        self.window.title("Выбор начального условия")
+
+        self.combobox = ttk.Combobox(self.window, values=self.f_names, font=('Arial', 10))
+        self.combobox.current(0)  # индекс списка, график кот. будет по умолчанию
+        self.combobox.place(x=460, y=70)
+
+        self.scale_par = ttk.Scale(self.window, orient=tkinter.HORIZONTAL, length=160, from_=0.0, to=9.9, value=5)
+        self.scale_par.place(x=460, y=150)
+
+        self.draw_flag = False
+        self.draw_graph(gauss_func)
+
+        btn_cancel = ttk.Button(self.window, text='Закрыть', command=self.on_closing)
+        btn_cancel.place(x=545, y=352)
+
+        btn_ok1 = ttk.Button(self.window, text='Ок', command=self.btn_ok_func)
+        btn_ok1.place(x=460, y=352)
+
+        btn_apply = ttk.Button(self.window, text="Применить", command=self.btn_apply_func)
+        btn_apply.place(x=500, y=250)
+
+        label_start_cond = ttk.Label(self.window, text="Начальное условие:", font=('Arial', 11))
+        label_start_cond.place(x=460, y=40)
+        label_parameter_d = ttk.Label(self.window, text="Параметр D:", font=('Arial', 11))
+        label_parameter_d.place(x=460, y=120)
+        self.label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 11))
+        self.label_just_d.place(x=460, y=210)
+        label_0 = ttk.Label(self.window, text="0")
+        label_0.place(x=458, y=175)
+        label_1 = ttk.Label(self.window, text="10")
+        label_1.place(x=606, y=175)
