@@ -133,7 +133,7 @@ class StartConfigurationWindow():
             ax.set_title(f'{self.combobox.get()}')
 
             self.fig_canvas = FigureCanvasTkAgg(fig, master=self.window)
-            NavigationToolbar2Tk(self.fig_canvas)
+            #NavigationToolbar2Tk(self.fig_canvas)
             self.fig_canvas.get_tk_widget().place(x=2, y=2)
             self.draw_flag = True
         else:
