@@ -2,8 +2,7 @@ import tkinter
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.patches import Circle
 from tkinter import ttk
 from start_functions import *
@@ -26,7 +25,7 @@ def click_wrapper(window):#обраотка нажатий на график
 
 
 def draw_scheme_area(ax, mini_mode=False, scheme=None):#оформление сетки для отображения схемы
-    ax.set_xticks([-0.45, 0, 1, 2, 3, 3.45])
+    ax.set_xticks([-0.45, 0, 1, 2, 3, 3.45]) 
     ax.set_yticks([-0.45, 0, 1, 2, 2.45])
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -109,7 +108,6 @@ class SchemeWindow():#окно выбора схемы
             self.scheme[:,-1].fill(False)
 
 
-
 class StartConfigurationWindow():
     def __init__(self, window, parent, idx):
         self.idx = idx
@@ -126,19 +124,18 @@ class StartConfigurationWindow():
         if self.draw_flag == False:
             self.graphs_x = np.linspace(0, 10, 1001)
             graph_val = [func(d, x) for x in self.graphs_x]
-            fig = Figure(figsize=(3.4, 2.5), dpi=100)
+            fig = Figure(figsize=(4.5, 3.5), dpi=100)
             ax = fig.add_subplot()
             ax.plot(self.graphs_x, graph_val, "-r", linewidth=3)
             ax.grid(color='black', linewidth=0.5)
             ax.set_title(f'{self.combobox.get()}')
 
             self.fig_canvas = FigureCanvasTkAgg(fig, master=self.window)
-            NavigationToolbar2Tk(self.fig_canvas)
             self.fig_canvas.get_tk_widget().place(x=2, y=2)
             self.draw_flag = True
         else:
             graph_val = [func(d, x) for x in self.graphs_x]
-            fig = Figure(figsize=(3.4, 2.5), dpi=100)
+            fig = Figure(figsize=(4.5, 3.5), dpi=100)
             ax = fig.add_subplot()
             ax.plot(self.graphs_x, graph_val, "-r", linewidth=3)
             ax.grid(color='black', linewidth=0.5)
@@ -153,8 +150,8 @@ class StartConfigurationWindow():
 
     def btn_apply_func(self):
         self.label_just_d.destroy()
-        label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 11))
-        label_just_d.place(x=460, y=210)
+        label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
+        label_just_d.place(x=490, y=220)
 
         self.clear_my_draw()
         f_idx = self.f_names.index(self.combobox.get())
@@ -172,37 +169,47 @@ class StartConfigurationWindow():
         self.parent.destroy_child(self.idx)
         self.window.destroy()
 
+    def my_callback(self, event):
+        print("!!!")
+        label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
+        label_just_d.place(x=490, y=220)
 
+
+    
+    
     def init_child(self):
         self.window.geometry("700x385+600+300")
         self.window.title("Выбор начального условия")
+        self.window.resizable(False, False)
 
-        self.combobox = ttk.Combobox(self.window, values=self.f_names, font=('Arial', 10))
+        self.combobox = ttk.Combobox(self.window, values=self.f_names, font=('Arial', 11))
         self.combobox.current(0)  # индекс списка, график кот. будет по умолчанию
-        self.combobox.place(x=460, y=70)
-
-        self.scale_par = ttk.Scale(self.window, orient=tkinter.HORIZONTAL, length=160, from_=0.0, to=9.9, value=5)
-        self.scale_par.place(x=460, y=150)
+        self.combobox.place(x=490, y=70)
+        
+        self.scale_par = ttk.Scale(self.window, orient=tkinter.HORIZONTAL, length=180, from_=0.0, to=9.9, value=5)
+        self.scale_par.place(x=490, y=160)
 
         self.draw_flag = False
         self.draw_graph(gauss_func)
 
         btn_cancel = ttk.Button(self.window, text='Закрыть', command=self.on_closing)
-        btn_cancel.place(x=545, y=352)
+        btn_cancel.place(x=615, y=352)
 
         btn_ok1 = ttk.Button(self.window, text='Ок', command=self.btn_ok_func)
-        btn_ok1.place(x=460, y=352)
+        btn_ok1.place(x=531, y=352)
 
         btn_apply = ttk.Button(self.window, text="Применить", command=self.btn_apply_func)
-        btn_apply.place(x=500, y=250)
+        btn_apply.place(x=543, y=270)
 
-        label_start_cond = ttk.Label(self.window, text="Начальное условие:", font=('Arial', 11))
-        label_start_cond.place(x=460, y=40)
-        label_parameter_d = ttk.Label(self.window, text="Параметр D:", font=('Arial', 11))
-        label_parameter_d.place(x=460, y=120)
-        self.label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 11))
-        self.label_just_d.place(x=460, y=210)
+        label_start_cond = ttk.Label(self.window, text="Начальное условие:", font=('Arial', 12))
+        label_start_cond.place(x=490, y=40)
+        label_parameter_d = ttk.Label(self.window, text="Параметр D:", font=('Arial', 12))
+        label_parameter_d.place(x=490, y=125)
+        self.label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
+        self.label_just_d.place(x=490, y=220)
         label_0 = ttk.Label(self.window, text="0")
-        label_0.place(x=458, y=175)
-        label_1 = ttk.Label(self.window, text="10")
-        label_1.place(x=606, y=175)
+        label_0.place(x=488, y=185)
+        label_5 = ttk.Label(self.window, text="5")
+        label_5.place(x=575, y=185)
+        label_10 = ttk.Label(self.window, text="10")
+        label_10.place(x=660, y=185)
