@@ -120,7 +120,7 @@ class StartConfigurationWindow():
         self.init_child()
 
 
-    def     draw_graph(self, func):
+    def draw_graph(self, func):
         d = self.custom_func_entry.get() if self.is_custom == True else round(self.scale_par.get(), 1)
         if self.draw_flag == False:
             self.graphs_x = np.linspace(0, 10, 1001)
