@@ -7,7 +7,7 @@ from matplotlib.patches import Circle
 from tkinter import ttk
 from start_functions import *
 
-def click_wrapper(window):#обраотка нажатий на график
+def click_wrapper(window):#обработка нажатий на график
     def onclick(event):
         if event.xdata is None or event.ydata is None:
             return
@@ -116,11 +116,12 @@ class StartConfigurationWindow():
         self.parent = parent
         self.f_names = [u'Гауссиан', u'Двойной Гауссиан', u'Ступенька', u'Треугольник']
         self.functions = [gauss_func, double_gauss_func, step_func, triangle_func]
+        self.custom_function = custom_func
         self.init_child()
 
 
     def draw_graph(self, func):
-        d = round(self.scale_par.get(), 1)
+        d = self.custom_func_entry.get() if self.is_custom == True else round(self.scale_par.get(), 1)
         if self.draw_flag == False:
             self.graphs_x = np.linspace(0, 10, 1001)
             graph_val = [func(d, x) for x in self.graphs_x]
@@ -154,8 +155,13 @@ class StartConfigurationWindow():
         label_just_d.place(x=490, y=220)
 
         self.clear_my_draw()
-        f_idx = self.f_names.index(self.combobox.get())
-        self.draw_graph(self.functions[f_idx])
+        if self.custom_func_entry.get() == '':
+            self.is_custom = False
+            f_idx = self.f_names.index(self.combobox.get())
+            self.draw_graph(self.functions[f_idx])
+        else:
+            self.is_custom = True
+            self.draw_graph(self.custom_function)
 
 
     def btn_ok_func(self):
@@ -183,6 +189,9 @@ class StartConfigurationWindow():
         self.window.resizable(False, False)
 
         self.combobox = ttk.Combobox(self.window, values=self.f_names, font=('Arial', 11))
+        self.custom_func_entry = ttk.Entry(self.window, width=25)
+        self.custom_func_entry.grid(column=1, row=0)
+        self.custom_func_entry.place(x=460, y=250)
         self.combobox.current(0)  # индекс списка, график кот. будет по умолчанию
         self.combobox.place(x=490, y=70)
         
@@ -190,6 +199,7 @@ class StartConfigurationWindow():
         self.scale_par.place(x=490, y=160)
 
         self.draw_flag = False
+        self.is_custom = False
         self.draw_graph(gauss_func)
 
         btn_cancel = ttk.Button(self.window, text='Закрыть', command=self.on_closing)
@@ -199,6 +209,7 @@ class StartConfigurationWindow():
         btn_ok1.place(x=531, y=352)
 
         btn_apply = ttk.Button(self.window, text="Применить", command=self.btn_apply_func)
+
         btn_apply.place(x=543, y=270)
 
         label_start_cond = ttk.Label(self.window, text="Начальное условие:", font=('Arial', 12))
@@ -207,6 +218,7 @@ class StartConfigurationWindow():
         label_parameter_d.place(x=490, y=125)
         self.label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
         self.label_just_d.place(x=490, y=220)
+
         label_0 = ttk.Label(self.window, text="0")
         label_0.place(x=488, y=185)
         label_5 = ttk.Label(self.window, text="5")

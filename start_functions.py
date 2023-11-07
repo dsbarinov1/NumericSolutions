@@ -1,4 +1,5 @@
 import numpy as np
+from sympy import symbols, sympify, lambdify
 
 def double_gauss_func(d, x):
     sigma = 0.9 + 0.03 * d
@@ -25,3 +26,18 @@ def triangle_func(d, x):
     b = -0.75 + 0.0625 * d
     #return (k * x + b if 0 <= k * x + b <= 1 else 0)
     return np.where((0 <= k * x + b) & (k * x + b <= 1), k * x + b, 0.0)
+
+def custom_func(d, x):
+    # Создаем символьные переменные
+    x_sym = symbols('x')
+
+    # Ввод формулы как строки
+    formula_str = d
+
+    # Преобразуем строку в символьное выражение
+    formula = sympify(formula_str)
+
+    # Создаем функцию Python из символьного выражения
+    python_function = lambdify((x_sym), formula, "numpy")
+
+    return python_function(x)
