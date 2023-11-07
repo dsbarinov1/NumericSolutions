@@ -120,12 +120,12 @@ class StartConfigurationWindow():
         self.init_child()
 
 
-    def draw_graph(self, func):
+    def     draw_graph(self, func):
         d = self.custom_func_entry.get() if self.is_custom == True else round(self.scale_par.get(), 1)
         if self.draw_flag == False:
             self.graphs_x = np.linspace(0, 10, 1001)
             graph_val = [func(d, x) for x in self.graphs_x]
-            fig = Figure(figsize=(4.5, 3.5), dpi=100)
+            fig = Figure(figsize=(3.5, 2.5), dpi=100)
             ax = fig.add_subplot()
             ax.plot(self.graphs_x, graph_val, "-r", linewidth=3)
             ax.grid(color='black', linewidth=0.5)
@@ -136,7 +136,7 @@ class StartConfigurationWindow():
             self.draw_flag = True
         else:
             graph_val = [func(d, x) for x in self.graphs_x]
-            fig = Figure(figsize=(4.5, 3.5), dpi=100)
+            fig = Figure(figsize=(3.5, 2.5), dpi=100)
             ax = fig.add_subplot()
             ax.plot(self.graphs_x, graph_val, "-r", linewidth=3)
             ax.grid(color='black', linewidth=0.5)
@@ -187,10 +187,10 @@ class StartConfigurationWindow():
         self.combobox = ttk.Combobox(self.window, values=self.f_names, font=('Arial', 11))
         self.custom_func_entry = ttk.Entry(self.window, width=25)
         self.custom_func_entry.grid(column=1, row=0)
-        self.custom_func_entry.place(x=460, y=250)
+        self.custom_func_entry.place(x=470, y=250)
         self.custom_func_entry.insert(0, "exp(x)") # Установка начального значения
         self.combobox.current(0)  # индекс списка, график кот. будет по умолчанию
-        self.combobox.place(x=490, y=70)
+        self.combobox.place(x=470, y=70)
         
         self.scale_par = ttk.Scale(self.window, orient=tkinter.HORIZONTAL, length=180, from_=0.0, to=9.9, value=5)
         self.scale_par.place(x=490, y=160)
@@ -200,21 +200,21 @@ class StartConfigurationWindow():
         self.draw_graph(gauss_func)
 
         btn_cancel = ttk.Button(self.window, text='Закрыть', command=self.on_closing)
-        btn_cancel.place(x=615, y=352)
+        btn_cancel.place(x=600, y=352)
 
         btn_ok1 = ttk.Button(self.window, text='Ок', command=self.btn_ok_func)
-        btn_ok1.place(x=531, y=352)
+        btn_ok1.place(x=500, y=352)
 
         btn_apply = ttk.Button(self.window, text="Применить", command=self.btn_apply_func)
 
-        btn_apply.place(x=543, y=270)
+        btn_apply.place(x=535, y=290)
 
         label_start_cond = ttk.Label(self.window, text="Начальное условие:", font=('Arial', 12))
-        label_start_cond.place(x=490, y=40)
+        label_start_cond.place(x=470, y=40)
         label_parameter_d = ttk.Label(self.window, text="Параметр D:", font=('Arial', 12))
-        label_parameter_d.place(x=490, y=125)
+        label_parameter_d.place(x=470, y=125)
         self.label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
-        self.label_just_d.place(x=490, y=220)
+        self.label_just_d.place(x=470, y=220)
 
         label_0 = ttk.Label(self.window, text="0")
         label_0.place(x=488, y=185)
