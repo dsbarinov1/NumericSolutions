@@ -186,7 +186,8 @@ class StartConfigurationWindow():
         self.combobox = ttk.Combobox(self.window, values=self.f_names, font=('Arial', 10))
         self.custom_func_entry = ttk.Entry(self.window, width=25)
         self.custom_func_entry.grid(column=1, row=0)
-        self.custom_func_entry.place(x=460, y=250)
+        self.custom_func_entry.place(x=460, y=270)
+        self.custom_func_entry.insert(0, "exp(x)") # Установка начального значения
         self.combobox.current(0)  # индекс списка, график кот. будет по умолчанию
         self.combobox.place(x=460, y=70)
 
@@ -204,7 +205,7 @@ class StartConfigurationWindow():
         btn_ok1.place(x=460, y=352)
 
         btn_apply = ttk.Button(self.window, text="Применить", command=self.btn_apply_func)
-        btn_apply.place(x=500, y=290)
+        btn_apply.place(x=515, y=305)
 
         label_start_cond = ttk.Label(self.window, text="Начальное условие:", font=('Arial', 11))
         label_start_cond.place(x=460, y=40)
@@ -216,3 +217,5 @@ class StartConfigurationWindow():
         label_0.place(x=458, y=175)
         label_1 = ttk.Label(self.window, text="10")
         label_1.place(x=606, y=175)
+        custom_func_label = ttk.Label(self.window, text="Введите функцию:", font=('Arial', 11))
+        custom_func_label.place(x=490, y=240)
