@@ -26,12 +26,16 @@ def resource_path(relative_path):#для того чтобы экзешник н
 
 iteration_counter = 0
 r = 0.45
-h = 0.1
-X_MAX = 30
+N = 100
+X_MAX = 31.4159
+h = float(X_MAX) / N
+Y_MAX = 1
+Y_MIN = 0
 XLIM = (0, X_MAX)
-YLIM = (-0.5, 1.5)
+YLIM = (Y_MIN - 0.5, Y_MAX + 0.5)
 
-X = np.linspace(0, X_MAX, int(X_MAX/h), dtype=float)
+
+X = np.linspace(0, X_MAX, N, dtype=float)
 start_function = start_functions.double_gauss_func
 start_function_param = 5.0
 STOCK_IMG = plt.imread(resource_path("add.png"))
@@ -53,12 +57,15 @@ anim = None#та же фигня
 
 
 def init():#функция для подготовки анимации к запуску
-    global iteration_counter, U1_arr, U2_arr, steps_texts, axs, plt_buttons, start_function, start_function_param
+    global iteration_counter, U1_arr, U2_arr, steps_texts, axs, plt_buttons, start_function, start_function_param, Y_MIN, Y_MAX, YLIM
     iteration_counter = 1
     for i in range(len(U1_arr)):
         U1_arr[i] = start_function(start_function_param, X)
     for i in range(len(U2_arr)):
         U2_arr[i] = laying_L(U1_arr[i], r, h, 1)
+    Y_MIN = np.min(U1_arr[0])
+    Y_MAX = np.max(U1_arr[0])
+    YLIM = (Y_MIN - 0.5, Y_MAX + 0.5)
     for i in range(len(axs)):
         ax = axs[i]
         ax.set_aspect('auto')
@@ -69,8 +76,8 @@ def init():#функция для подготовки анимации к за�
             ax.patch.set_facecolor('white')
             line, = ax.plot([], [], lw=2, color='blue')
             lines[i] = line
-            help_line_1, = ax.plot([0, X_MAX], [1, 1], lw=2, linestyle='dashed', color='grey', alpha=0.4)
-            help_line_2, = ax.plot([0, X_MAX], [0, 0], lw=2, linestyle='dashed', color='grey', alpha=0.4)
+            help_line_1, = ax.plot([0, X_MAX], [Y_MAX, Y_MAX], lw=2, linestyle='dashed', color='grey', alpha=0.4)
+            help_line_2, = ax.plot([0, X_MAX], [Y_MIN, Y_MIN], lw=2, linestyle='dashed', color='grey', alpha=0.4)
             help_lines[i] = [help_line_1, help_line_2]
             mini_scheme = ax.inset_axes([0.8, 0.8, 0.15, 0.15])
             draw_scheme_area(mini_scheme, mini_mode=True, scheme=SCHEMES[i])
@@ -163,11 +170,11 @@ def go_to_iteration(entry):#переход к итерации
 
 def set_r_h(entry_r, entry_h):#для установки числа Куранта и шага
     target_r = float(entry_r.get())
-    target_h = float(entry_h.get())
-    global r, h, X
+    target_N = int(entry_h.get())
+    global r, h, X, N, X_MAX
     r = target_r
-    h = target_h
-    X = np.linspace(0, X_MAX, int(X_MAX / h))
+    h = float(X_MAX)/target_N
+    X = np.linspace(0, X_MAX, target_N)
     start()
 
 
@@ -227,9 +234,9 @@ class MainWindow(tkinter.Frame):#основное окошко
         choose_start_button.pack(padx=5, side=tkinter.LEFT)
         r_entry = tkinter.Entry(self.f_mid, font=myFont, width=5)
         h_entry = tkinter.Entry(self.f_mid, font=myFont, width=5)
-        r_button = tkinter.Button(self.f_mid, text="Установить r и h", width=15,command=partial(set_r_h,r_entry,h_entry), font=myFont, background='#c3c3c3')
+        r_button = tkinter.Button(self.f_mid, text="Установить r и n", width=15,command=partial(set_r_h,r_entry,h_entry), font=myFont, background='#c3c3c3')
         start_b = tkinter.Button(self.f_mid, text="Начать", width=10,command=start, font=myFont, background='#c3c3c3')
-        global pause_button, r, h, STEPS
+        global pause_button, r, h, STEPS, N
         pause_button = tkinter.Button(self.f_mid, text="Стоп", width=10, command=stop_resume, font=myFont, background='#c3c3c3')
         iteration_entry = tkinter.Entry(self.f_mid, font=myFont, width=5)
         iteration_entry.delete(0, tkinter.END)
@@ -237,7 +244,7 @@ class MainWindow(tkinter.Frame):#основное окошко
         r_entry.delete(0, tkinter.END)
         r_entry.insert(0, str(r))
         h_entry.delete(0, tkinter.END)
-        h_entry.insert(0, str(h))
+        h_entry.insert(0, str(N))
         iteration_button = tkinter.Button(self.f_mid, text="Перейти на временной слой", command= partial(go_to_iteration,iteration_entry), font=myFont, background='#c3c3c3')
         for obj in [iteration_button, iteration_entry, pause_button, start_b]:
             obj.pack(padx=5, side=tkinter.RIGHT)
@@ -258,6 +265,9 @@ class MainWindow(tkinter.Frame):#основное окошко
 
 
     def choose_function(self):#открытие окошка для выбора начального условия
+        global IS_RUNNING
+        if IS_RUNNING:
+            stop_resume()
         if not self.childWindows[4]:
             self.childWindows[4] = tkinter.Toplevel(self.parent)
             w = StartConfigurationWindow(self.childWindows[4], self, 4)

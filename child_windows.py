@@ -114,14 +114,17 @@ class StartConfigurationWindow():
         self.root = window
         self.window = window
         self.parent = parent
-        self.f_names = [u'Гауссиан', u'Двойной Гауссиан', u'Ступенька', u'Треугольник']
-        self.functions = [gauss_func, double_gauss_func, step_func, triangle_func]
-        self.custom_function = custom_func
+        self.f_names = [u'Гауссиан', u'Двойной Гауссиан', u'Ступенька', u'Треугольник', u'Пользовательская функция']
+        self.functions = [gauss_func, double_gauss_func, step_func, triangle_func, custom_func]
+        self.custom_func_idx = 4
         self.init_child()
-
+        self.last_state = False
 
     def draw_graph(self, func):
-        d = self.custom_func_entry.get() if self.is_custom == True else round(self.scale_par.get(), 1)
+        if self.f_names.index(self.combobox.get()) != self.custom_func_idx:
+            d = round(self.scale_par.get(), 1)
+        else:
+            d = self.custom_func_entry.get()
         if self.draw_flag == False:
             self.graphs_x = np.linspace(0, 10, 1001)
             graph_val = [func(d, x) for x in self.graphs_x]
@@ -148,37 +151,51 @@ class StartConfigurationWindow():
         for item in self.fig_canvas.get_tk_widget().find_all():
             self.fig_canvas.get_tk_widget().delete(item)
 
-
     def btn_apply_func(self):
-        self.label_just_d.destroy()
-        label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
-        label_just_d.place(x=490, y=220)
-
         self.clear_my_draw()
-        if self.custom_func_entry.get() == '':
-            self.is_custom = False
-            f_idx = self.f_names.index(self.combobox.get())
-            self.draw_graph(self.functions[f_idx])
-        else:
-            self.is_custom = True
-            self.draw_graph(self.custom_function)
-
+        f_idx = self.f_names.index(self.combobox.get())
+        self.draw_graph(self.functions[f_idx])
 
     def btn_ok_func(self):
         f_idx = self.f_names.index(self.combobox.get())
-        d = round(self.scale_par.get(), 1)
-        self.parent.set_function(self.functions[f_idx], d)
+        f = self.functions[f_idx]
+        if f_idx != self.custom_func_idx:
+            d = round(self.scale_par.get(), 1)
+        else:
+            d = self.custom_func_entry.get()
+        self.parent.set_function(f, d)
         self.on_closing()
-
 
     def on_closing(self):
         self.parent.destroy_child(self.idx)
         self.window.destroy()
 
-    def my_callback(self, event):
-        label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
-        label_just_d.place(x=490, y=220)
-    
+    def scale_modified(self, event):
+        self.label_just_d.config(text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
+        self.btn_apply_func()
+
+    def combobox_modified(self, event):
+        state = self.f_names.index(self.combobox.get()) == self.custom_func_idx
+        if state != self.last_state:
+            self.last_state = state
+            if not state:
+                self.custom_func_entry.place_forget()
+                self.label_parameter_d.place(x=470, y=125)
+                self.label_just_d.place(x=470, y=220)
+                self.scale_par.place(x=490, y=160)
+                self.label_0.place(x=488, y=185)
+                self.label_5.place(x=575, y=185)
+                self.label_10.place(x=660, y=185)
+            else:
+                self.custom_func_entry.place(x=470, y=250)
+                self.label_parameter_d.place_forget()
+                self.label_just_d.place_forget()
+                self.scale_par.place_forget()
+                self.label_0.place_forget()
+                self.label_5.place_forget()
+                self.label_10.place_forget()
+        self.btn_apply_func()
+
     def init_child(self):
         self.window.geometry("700x385+600+300")
         self.window.title("Выбор начального условия")
@@ -188,15 +205,17 @@ class StartConfigurationWindow():
         self.custom_func_entry = ttk.Entry(self.window, width=25)
         self.custom_func_entry.grid(column=1, row=0)
         self.custom_func_entry.place(x=470, y=250)
-        self.custom_func_entry.insert(0, "exp(x)") # Установка начального значения
+        self.custom_func_entry.insert(0, "cos(x)") # Установка начального значения
+        self.custom_func_entry.place_forget()
         self.combobox.current(0)  # индекс списка, график кот. будет по умолчанию
+        self.combobox.bind('<<ComboboxSelected>>', self.combobox_modified)
         self.combobox.place(x=470, y=70)
         
         self.scale_par = ttk.Scale(self.window, orient=tkinter.HORIZONTAL, length=180, from_=0.0, to=9.9, value=5)
         self.scale_par.place(x=490, y=160)
+        self.scale_par.bind("<ButtonRelease-1>", self.scale_modified)
 
         self.draw_flag = False
-        self.is_custom = False
         self.draw_graph(gauss_func)
 
         btn_cancel = ttk.Button(self.window, text='Закрыть', command=self.on_closing)
@@ -211,14 +230,14 @@ class StartConfigurationWindow():
 
         label_start_cond = ttk.Label(self.window, text="Начальное условие:", font=('Arial', 12))
         label_start_cond.place(x=470, y=40)
-        label_parameter_d = ttk.Label(self.window, text="Параметр D:", font=('Arial', 12))
-        label_parameter_d.place(x=470, y=125)
+        self.label_parameter_d = ttk.Label(self.window, text="Параметр D:", font=('Arial', 12))
+        self.label_parameter_d.place(x=470, y=125)
         self.label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
         self.label_just_d.place(x=470, y=220)
 
-        label_0 = ttk.Label(self.window, text="0")
-        label_0.place(x=488, y=185)
-        label_5 = ttk.Label(self.window, text="5")
-        label_5.place(x=575, y=185)
-        label_10 = ttk.Label(self.window, text="10")
-        label_10.place(x=660, y=185)
+        self.label_0 = ttk.Label(self.window, text="0")
+        self.label_0.place(x=488, y=185)
+        self.label_5 = ttk.Label(self.window, text="5")
+        self.label_5.place(x=575, y=185)
+        self.label_10 = ttk.Label(self.window, text="10")
+        self.label_10.place(x=660, y=185)
