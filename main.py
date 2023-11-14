@@ -9,8 +9,9 @@ from  matplotlib.widgets import Button
 from functools import partial
 import sys
 from matplotlib import animation
-from computation import double_gauss_func,laying_L,stairs_step, B, SIGMA, SHIFT, scheme_step
-from child_windows import SchemeWindow, draw_scheme_area
+from computation import laying_L,stairs_step, B, SIGMA, SHIFT, scheme_step
+from child_windows import SchemeWindow, draw_scheme_area, StartConfigurationWindow
+import start_functions
 import os
 
 
@@ -25,11 +26,18 @@ def resource_path(relative_path):#для того чтобы экзешник н
 
 iteration_counter = 0
 r = 0.45
-h = 0.1
-X_MAX = 30
+N = 100
+X_MAX = 31.4159
+h = float(X_MAX) / N
+Y_MAX = 1
+Y_MIN = 0
 XLIM = (0, X_MAX)
-YLIM = (-0.5, 1.5)
+YLIM = (Y_MIN - 0.5, Y_MAX + 0.5)
 
+
+X = np.linspace(0, X_MAX, N, dtype=float)
+start_function = start_functions.double_gauss_func
+start_function_param = 5.0
 STOCK_IMG = plt.imread(resource_path("add.png"))
 fig, axs = plt.subplots(2, 2)
 axs = [ax for row in axs for ax in row]
@@ -38,9 +46,8 @@ lines = [None]*4
 help_lines = [[],[],[],[]]
 steps_texts = [None]*4
 plt_buttons = [None]*4
-X = np.linspace(0, X_MAX, int(X_MAX/h), dtype=float)
-U1_arr = [double_gauss_func(X, B, SIGMA, SHIFT)]*4
-U2_arr = [double_gauss_func(X, B, SIGMA, SHIFT)]*4
+U1_arr = [start_function(start_function_param, X)]*4
+U2_arr = [start_function(start_function_param, X)]*4
 STEPS = SAVED_STEPS = 1
 SCHEMES = [None]*4
 IS_RUNNING = False
@@ -50,12 +57,15 @@ anim = None#та же фигня
 
 
 def init():#функция для подготовки анимации к запуску
-    global iteration_counter, U1_arr, U2_arr, steps_texts, axs, plt_buttons
+    global iteration_counter, U1_arr, U2_arr, steps_texts, axs, plt_buttons, start_function, start_function_param, Y_MIN, Y_MAX, YLIM
     iteration_counter = 1
     for i in range(len(U1_arr)):
-        U1_arr[i] = double_gauss_func(X, B, SIGMA, SHIFT)
+        U1_arr[i] = start_function(start_function_param, X)
     for i in range(len(U2_arr)):
         U2_arr[i] = laying_L(U1_arr[i], r, h, 1)
+    Y_MIN = np.min(U1_arr[0])
+    Y_MAX = np.max(U1_arr[0])
+    YLIM = (Y_MIN - 0.5, Y_MAX + 0.5)
     for i in range(len(axs)):
         ax = axs[i]
         ax.set_aspect('auto')
@@ -66,8 +76,8 @@ def init():#функция для подготовки анимации к за�
             ax.patch.set_facecolor('white')
             line, = ax.plot([], [], lw=2, color='blue')
             lines[i] = line
-            help_line_1, = ax.plot([0, X_MAX], [1, 1], lw=2, linestyle='dashed', color='grey', alpha=0.4)
-            help_line_2, = ax.plot([0, X_MAX], [0, 0], lw=2, linestyle='dashed', color='grey', alpha=0.4)
+            help_line_1, = ax.plot([0, X_MAX], [Y_MAX, Y_MAX], lw=2, linestyle='dashed', color='grey', alpha=0.4)
+            help_line_2, = ax.plot([0, X_MAX], [Y_MIN, Y_MIN], lw=2, linestyle='dashed', color='grey', alpha=0.4)
             help_lines[i] = [help_line_1, help_line_2]
             mini_scheme = ax.inset_axes([0.8, 0.8, 0.15, 0.15])
             draw_scheme_area(mini_scheme, mini_mode=True, scheme=SCHEMES[i])
@@ -88,7 +98,7 @@ def animate(iter):#сама анимация
                 lines[i].set_data(X, U2_arr[i])
                 U1_arr[i], U2_arr[i] = scheme_step(U1_arr[i], U2_arr[i], SCHEMES[i], r, h, STEPS)
                 iteration_counter += STEPS
-                steps_texts[i].set_text('шаги: {}\nитерация: {}'.format(STEPS, iteration_counter))
+                steps_texts[i].set_text('шаги: {}\nслой по времени: {}'.format(STEPS, iteration_counter))
                 #print(iter)
 
     return lines + steps_texts
@@ -149,7 +159,7 @@ def go_to_iteration(entry):#переход к итерации
     for i in range(len(SCHEMES)):
         if SCHEMES[i] is not None:
             if target_iteration < iteration_counter:
-                U1_arr[i] = double_gauss_func(X, B, SIGMA, SHIFT)
+                U1_arr[i] = start_function(start_function_param, X)
                 U2_arr[i] = laying_L(U1_arr[i], r, h, 1)
             U1_arr[i], U2_arr[i] = scheme_step(U1_arr[i], U2_arr[i], SCHEMES[i], r, h, steps_to_target)
             lines[i].set_data(X, U2_arr[i])
@@ -160,11 +170,11 @@ def go_to_iteration(entry):#переход к итерации
 
 def set_r_h(entry_r, entry_h):#для установки числа Куранта и шага
     target_r = float(entry_r.get())
-    target_h = float(entry_h.get())
-    global r, h, X
+    target_N = int(entry_h.get())
+    global r, h, X, N, X_MAX
     r = target_r
-    h = target_h
-    X = np.linspace(0, X_MAX, int(X_MAX / h))
+    h = float(X_MAX)/target_N
+    X = np.linspace(0, X_MAX, target_N)
     start()
 
 
@@ -192,7 +202,7 @@ def click_wrapper(window):#обработка нажатия на график
 
 class MainWindow(tkinter.Frame):#основное окошко
     def __init__(self, parent):
-        self.childWindows = [None]*4
+        self.childWindows = [None]*5
         tkinter.Frame.__init__(self, parent)
         self.parent = parent
         self.parent.title("Главное меню")
@@ -213,6 +223,7 @@ class MainWindow(tkinter.Frame):#основное окошко
         steps_entry.delete(0, tkinter.END)
         steps_entry.insert(0, "1")
         delete_button = tkinter.Button(self.f_top, text="Режим: добавление", width=20 , font=myFont, background='#c3c3c3')
+        choose_start_button = tkinter.Button(self.f_top, text="Задать начальное условие", width=35, command=self.choose_function, font=myFont, background='#c3c3c3')
         delete_button.configure(command=partial(change_mode,delete_button))
         plus_button = tkinter.Button(self.f_top, text="+", width=5, command=partial(up,steps_entry) , font=myFont, background='#c3c3c3')
         minus_button = tkinter.Button(self.f_top, text="-", width=5, command=partial(down,steps_entry), font=myFont, background='#c3c3c3')
@@ -220,11 +231,12 @@ class MainWindow(tkinter.Frame):#основное окошко
         for obj in [set_button, plus_button, steps_entry, minus_button, steps_label]:
             obj.pack(padx=5, side=tkinter.RIGHT)
         delete_button.pack(padx=5, side=tkinter.LEFT)
+        choose_start_button.pack(padx=5, side=tkinter.LEFT)
         r_entry = tkinter.Entry(self.f_mid, font=myFont, width=5)
         h_entry = tkinter.Entry(self.f_mid, font=myFont, width=5)
-        r_button = tkinter.Button(self.f_mid, text="Установить r и h", width=15,command=partial(set_r_h,r_entry,h_entry), font=myFont, background='#c3c3c3')
+        r_button = tkinter.Button(self.f_mid, text="Установить r и n", width=15,command=partial(set_r_h,r_entry,h_entry), font=myFont, background='#c3c3c3')
         start_b = tkinter.Button(self.f_mid, text="Начать", width=10,command=start, font=myFont, background='#c3c3c3')
-        global pause_button, r, h, STEPS
+        global pause_button, r, h, STEPS, N
         pause_button = tkinter.Button(self.f_mid, text="Стоп", width=10, command=stop_resume, font=myFont, background='#c3c3c3')
         iteration_entry = tkinter.Entry(self.f_mid, font=myFont, width=5)
         iteration_entry.delete(0, tkinter.END)
@@ -232,8 +244,8 @@ class MainWindow(tkinter.Frame):#основное окошко
         r_entry.delete(0, tkinter.END)
         r_entry.insert(0, str(r))
         h_entry.delete(0, tkinter.END)
-        h_entry.insert(0, str(h))
-        iteration_button = tkinter.Button(self.f_mid, text="Перейти к итерации", command= partial(go_to_iteration,iteration_entry), font=myFont, background='#c3c3c3')
+        h_entry.insert(0, str(N))
+        iteration_button = tkinter.Button(self.f_mid, text="Перейти на временной слой", command= partial(go_to_iteration,iteration_entry), font=myFont, background='#c3c3c3')
         for obj in [iteration_button, iteration_entry, pause_button, start_b]:
             obj.pack(padx=5, side=tkinter.RIGHT)
         for obj in [r_button, r_entry, h_entry]:
@@ -252,16 +264,16 @@ class MainWindow(tkinter.Frame):#основное окошко
         self.canvas._tkcanvas.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=0)
 
 
-    def choose_function(self):#еще не реализовано
-        pass
-        """
-        if not self.childWindows[0]:
-            self.childWindows[0] = tkinter.Toplevel(self.parent)
-            w = ChildWindow(self.childWindows[0], self, 4)
-            self.childWindows[0].protocol("WM_DELETE_WINDOW", w.on_closing)
+    def choose_function(self):#открытие окошка для выбора начального условия
+        global IS_RUNNING
+        if IS_RUNNING:
+            stop_resume()
+        if not self.childWindows[4]:
+            self.childWindows[4] = tkinter.Toplevel(self.parent)
+            w = StartConfigurationWindow(self.childWindows[4], self, 4)
+            self.childWindows[4].protocol("WM_DELETE_WINDOW", w.on_closing)
         else:
-            self.childWindows[0].deiconify()
-        """
+            self.childWindows[4].deiconify()
 
 
     def choose_scheme(self, idx):#открытие окошка для выбора схемы
@@ -287,6 +299,13 @@ class MainWindow(tkinter.Frame):#основное окошко
         start()
 
 
+    def set_function(self, f, parameter):
+        global start_function, start_function_param
+        start_function = f
+        start_function_param = parameter
+        start()
+
+
     def remove_scheme(self, idx):#удаление схемы у графика
         global SCHEMES
         self.schemes[idx] = None
@@ -305,7 +324,7 @@ root = tkinter.Tk()
 
 def main():
     global app, stopRead, root
-    root.geometry("900x700")
+    root.geometry("1000x700")
     root.protocol("WM_DELETE_WINDOW", on_closing)
     app = MainWindow(root)
     root.mainloop()

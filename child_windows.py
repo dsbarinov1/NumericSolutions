@@ -1,10 +1,13 @@
 import tkinter
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.patches import Circle
+from tkinter import ttk
+from start_functions import *
 
-def click_wrapper(window):#обраотка нажатий на график
+def click_wrapper(window):#обработка нажатий на график
     def onclick(event):
         if event.xdata is None or event.ydata is None:
             return
@@ -22,7 +25,7 @@ def click_wrapper(window):#обраотка нажатий на график
 
 
 def draw_scheme_area(ax, mini_mode=False, scheme=None):#оформление сетки для отображения схемы
-    ax.set_xticks([-0.45, 0, 1, 2, 3, 3.45])
+    ax.set_xticks([-0.45, 0, 1, 2, 3, 3.45]) 
     ax.set_yticks([-0.45, 0, 1, 2, 2.45])
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -49,6 +52,7 @@ def draw_scheme_area(ax, mini_mode=False, scheme=None):#оформление с�
                 if flag:
                     drawObject = Circle((i, j), radius=0.2, fill=True, color="black")
                     ax.add_patch(drawObject)
+
 
 class SchemeWindow():#окно выбора схемы
     def __init__(self, window, parent, idx):
@@ -104,39 +108,136 @@ class SchemeWindow():#окно выбора схемы
             self.scheme[:,-1].fill(False)
 
 
+class StartConfigurationWindow():
+    def __init__(self, window, parent, idx):
+        self.idx = idx
+        self.root = window
+        self.window = window
+        self.parent = parent
+        self.f_names = [u'Гауссиан', u'Двойной Гауссиан', u'Ступенька', u'Треугольник', u'Пользовательская функция']
+        self.functions = [gauss_func, double_gauss_func, step_func, triangle_func, custom_func]
+        self.custom_func_idx = 4
+        self.init_child()
+        self.last_state = False
 
-    """
-        sf = ScrolledFrame(self.root, width=570, height=570)
-        sf.pack(side="top", expand=1, fill="both")
-        sf.bind_arrow_keys(self.root)
-        sf.bind_scroll_wheel(self.root)
-        inner_frame = sf.display_widget(Frame)
+    def draw_graph(self, func):
+        if self.f_names.index(self.combobox.get()) != self.custom_func_idx:
+            d = round(self.scale_par.get(), 1)
+        else:
+            d = self.custom_func_entry.get()
+        if self.draw_flag == False:
+            self.graphs_x = np.linspace(0, 10, 1001)
+            graph_val = [func(d, x) for x in self.graphs_x]
+            fig = Figure(figsize=(3.5, 2.5), dpi=100)
+            ax = fig.add_subplot()
+            ax.plot(self.graphs_x, graph_val, "-r", linewidth=3)
+            ax.grid(color='black', linewidth=0.5)
+            ax.set_title(f'{self.combobox.get()}')
 
-        row = 2
-        for scheme in scheme_dict:
-            if scheme_dict[scheme][1] is not None:
-                image = scheme_dict[scheme][1]
+            self.fig_canvas = FigureCanvasTkAgg(fig, master=self.window)
+            self.fig_canvas.get_tk_widget().place(x=2, y=2)
+            self.draw_flag = True
+        else:
+            graph_val = [func(d, x) for x in self.graphs_x]
+            fig = Figure(figsize=(3.5, 2.5), dpi=100)
+            ax = fig.add_subplot()
+            ax.plot(self.graphs_x, graph_val, "-r", linewidth=3)
+            ax.grid(color='black', linewidth=0.5)
+            ax.set_title(f'{self.combobox.get()}')
+            self.fig_canvas = FigureCanvasTkAgg(fig, master=self.window)
+            self.fig_canvas.get_tk_widget().place(x=2, y=2)
+
+    def clear_my_draw(self):
+        for item in self.fig_canvas.get_tk_widget().find_all():
+            self.fig_canvas.get_tk_widget().delete(item)
+
+    def btn_apply_func(self):
+        self.clear_my_draw()
+        f_idx = self.f_names.index(self.combobox.get())
+        self.draw_graph(self.functions[f_idx])
+
+    def btn_ok_func(self):
+        f_idx = self.f_names.index(self.combobox.get())
+        f = self.functions[f_idx]
+        if f_idx != self.custom_func_idx:
+            d = round(self.scale_par.get(), 1)
+        else:
+            d = self.custom_func_entry.get()
+        self.parent.set_function(f, d)
+        self.on_closing()
+
+    def on_closing(self):
+        self.parent.destroy_child(self.idx)
+        self.window.destroy()
+
+    def scale_modified(self, event):
+        self.label_just_d.config(text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
+        self.btn_apply_func()
+
+    def combobox_modified(self, event):
+        state = self.f_names.index(self.combobox.get()) == self.custom_func_idx
+        if state != self.last_state:
+            self.last_state = state
+            if not state:
+                self.custom_func_entry.place_forget()
+                self.label_parameter_d.place(x=470, y=125)
+                self.label_just_d.place(x=470, y=220)
+                self.scale_par.place(x=490, y=160)
+                self.label_0.place(x=488, y=185)
+                self.label_5.place(x=575, y=185)
+                self.label_10.place(x=660, y=185)
             else:
-                image =unknown_image
-            img = plt.imread(image)
-            fig = plt.figure(row)
-            ax = plt.gca()
-            ax.axis('off')
-            ax.set(xlim=(0, 50), ylim=(50, 0))
-            ax.imshow(img, origin="upper")
-            canvas = FigureCanvasTkAgg(fig, master=inner_frame)
-            canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=0)
-            canvas._tkcanvas.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=0)
-            """
-    """
-            button = Button(inner_frame, text=scheme, compound=tkinter.LEFT,
-                            command=partial(self.choose_scheme, scheme))
+                self.custom_func_entry.place(x=470, y=250)
+                self.label_parameter_d.place_forget()
+                self.label_just_d.place_forget()
+                self.scale_par.place_forget()
+                self.label_0.place_forget()
+                self.label_5.place_forget()
+                self.label_10.place_forget()
+        self.btn_apply_func()
 
-            button.grid(row=row,
-                       column=0,
-                       padx=4,
-                       pady=4)"""
-    """
-            row+=1
-            
-    """
+    def init_child(self):
+        self.window.geometry("700x385+600+300")
+        self.window.title("Выбор начального условия")
+        self.window.resizable(False, False)
+
+        self.combobox = ttk.Combobox(self.window, values=self.f_names, font=('Arial', 11))
+        self.custom_func_entry = ttk.Entry(self.window, width=25)
+        self.custom_func_entry.grid(column=1, row=0)
+        self.custom_func_entry.place(x=470, y=250)
+        self.custom_func_entry.insert(0, "cos(x)") # Установка начального значения
+        self.custom_func_entry.place_forget()
+        self.combobox.current(0)  # индекс списка, график кот. будет по умолчанию
+        self.combobox.bind('<<ComboboxSelected>>', self.combobox_modified)
+        self.combobox.place(x=470, y=70)
+        
+        self.scale_par = ttk.Scale(self.window, orient=tkinter.HORIZONTAL, length=180, from_=0.0, to=9.9, value=5)
+        self.scale_par.place(x=490, y=160)
+        self.scale_par.bind("<ButtonRelease-1>", self.scale_modified)
+
+        self.draw_flag = False
+        self.draw_graph(gauss_func)
+
+        btn_cancel = ttk.Button(self.window, text='Закрыть', command=self.on_closing)
+        btn_cancel.place(x=600, y=352)
+
+        btn_ok1 = ttk.Button(self.window, text='Ок', command=self.btn_ok_func)
+        btn_ok1.place(x=500, y=352)
+
+        btn_apply = ttk.Button(self.window, text="Применить", command=self.btn_apply_func)
+
+        btn_apply.place(x=535, y=290)
+
+        label_start_cond = ttk.Label(self.window, text="Начальное условие:", font=('Arial', 12))
+        label_start_cond.place(x=470, y=40)
+        self.label_parameter_d = ttk.Label(self.window, text="Параметр D:", font=('Arial', 12))
+        self.label_parameter_d.place(x=470, y=125)
+        self.label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
+        self.label_just_d.place(x=470, y=220)
+
+        self.label_0 = ttk.Label(self.window, text="0")
+        self.label_0.place(x=488, y=185)
+        self.label_5 = ttk.Label(self.window, text="5")
+        self.label_5.place(x=575, y=185)
+        self.label_10 = ttk.Label(self.window, text="10")
+        self.label_10.place(x=660, y=185)

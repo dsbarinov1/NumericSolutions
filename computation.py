@@ -55,8 +55,8 @@ def fill_matrix(n: int, u_shift: int, u3_P: np.ndarray)->np.ndarray:
     u_matrix = np.zeros((n, n), dtype=float64)
     for i in range(n):
         for k in range(5):
-            u_matrix[i, i - 2 + k] = -u3_P[k]
-        u_matrix[i, i+u_shift] = 1
+            u_matrix[i, (i - 2 + k)%n] = -u3_P[k]
+        u_matrix[i, (i+u_shift)%n] = 1
     return u_matrix
 
 
