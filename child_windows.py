@@ -125,8 +125,11 @@ class StartConfigurationWindow():
             d = round(self.scale_par.get(), 1)
         else:
             d = self.custom_func_entry.get()
+        self.x_max_graphic = 10 if int(self.x_max_entry.get()) > 100 or int(self.x_max_entry.get()) < 0 else int(self.x_max_entry.get())
+        self.x_max_entry.delete(0, tkinter.END)
+        self.x_max_entry.insert(0, str(self.x_max_graphic))
+        self.graphs_x = np.linspace(0, self.x_max_graphic, 1001)
         if self.draw_flag == False:
-            self.graphs_x = np.linspace(0, 10, 1001)
             graph_val = [func(d, x) for x in self.graphs_x]
             fig = Figure(figsize=(3.5, 2.5), dpi=100)
             ax = fig.add_subplot()
@@ -210,10 +213,18 @@ class StartConfigurationWindow():
         self.combobox.current(0)  # индекс списка, график кот. будет по умолчанию
         self.combobox.bind('<<ComboboxSelected>>', self.combobox_modified)
         self.combobox.place(x=470, y=70)
+
+        # Поле ввода максимального значения на графике по оси Х
+        self.x_max_label = ttk.Label(self.window, text="Max. значение оси X [0, 100] :", font=('Arial', 12))
+        self.x_max_label.place(x=50, y=290)
+        self.x_max_entry = ttk.Entry(self.window, font=('Arial', 12))
+        self.x_max_entry.insert(1, "10")
+        self.x_max_entry.place(x=50, y=320)
         
         self.scale_par = ttk.Scale(self.window, orient=tkinter.HORIZONTAL, length=180, from_=0.0, to=9.9, value=5)
         self.scale_par.place(x=490, y=160)
         self.scale_par.bind("<ButtonRelease-1>", self.scale_modified)
+
 
         self.draw_flag = False
         self.draw_graph(gauss_func)
