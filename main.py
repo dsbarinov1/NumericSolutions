@@ -9,10 +9,11 @@ from  matplotlib.widgets import Button
 from functools import partial
 import sys
 from matplotlib import animation
-from computation import laying_L,stairs_step, B, SIGMA, SHIFT, scheme_step
+from computation import analytical_solution, scheme_step
 from child_windows import SchemeWindow, draw_scheme_area, StartConfigurationWindow
 import start_functions
 import os
+from testing_schemes import laying_L
 
 
 def resource_path(relative_path):#для того чтобы экзешник не крашился
@@ -27,7 +28,7 @@ def resource_path(relative_path):#для того чтобы экзешник н
 iteration_counter = 0
 r = 0.45
 N = 100
-X_MAX = 31.4159
+X_MAX = 31.4159265359
 h = float(X_MAX) / N
 Y_MAX = 1
 Y_MIN = 0
@@ -44,6 +45,7 @@ axs = [ax for row in axs for ax in row]
 fig.tight_layout(pad=2.0)
 lines = [None]*4
 help_lines = [[],[],[],[]]
+analytical_lines = [None]*4
 steps_texts = [None]*4
 plt_buttons = [None]*4
 U1_arr = [start_function(start_function_param, X)]*4
@@ -57,12 +59,13 @@ anim = None#та же фигня
 
 
 def init():#функция для подготовки анимации к запуску
-    global iteration_counter, U1_arr, U2_arr, steps_texts, axs, plt_buttons, start_function, start_function_param, Y_MIN, Y_MAX, YLIM
+    global iteration_counter, U1_arr, U2_arr, steps_texts, axs, plt_buttons, start_function, start_function_param, Y_MIN, Y_MAX, YLIM, analytical_lines
     iteration_counter = 1
     for i in range(len(U1_arr)):
         U1_arr[i] = start_function(start_function_param, X)
     for i in range(len(U2_arr)):
         U2_arr[i] = laying_L(U1_arr[i], r, h, 1)
+        #U2_arr[i] = analytical_solution(r, h, N, 1, XLIM, start_function, start_function_param)
     Y_MIN = np.min(U1_arr[0])
     Y_MAX = np.max(U1_arr[0])
     YLIM = (Y_MIN - 0.5, Y_MAX + 0.5)
@@ -78,6 +81,7 @@ def init():#функция для подготовки анимации к за�
             lines[i] = line
             help_line_1, = ax.plot([0, X_MAX], [Y_MAX, Y_MAX], lw=2, linestyle='dashed', color='grey', alpha=0.4)
             help_line_2, = ax.plot([0, X_MAX], [Y_MIN, Y_MIN], lw=2, linestyle='dashed', color='grey', alpha=0.4)
+            analytical_lines[i], = ax.plot(X,start_function(start_function_param, X), lw=2, color='grey', alpha=0.4)
             help_lines[i] = [help_line_1, help_line_2]
             mini_scheme = ax.inset_axes([0.8, 0.8, 0.15, 0.15])
             draw_scheme_area(mini_scheme, mini_mode=True, scheme=SCHEMES[i])
@@ -87,21 +91,23 @@ def init():#функция для подготовки анимации к за�
             ax.axis('off')
             ax.set(xlim=(0, STOCK_IMG.shape[1]), ylim=(STOCK_IMG.shape[0], 0))
             ax.imshow(STOCK_IMG, origin="upper")
-    return steps_texts
+    return steps_texts + analytical_lines
 
 
 def animate(iter):#сама анимация
-    global SCHEMES, IS_RUNNING, lines, help_lines, X, U2_arr, U1_arr, r, h, STEPS, steps_texts, iteration_counter
+    global SCHEMES, IS_RUNNING, lines, help_lines, X, U2_arr, U1_arr, r, h, STEPS, steps_texts, iteration_counter, analytical_lines
+    analytical_U = analytical_solution(r, h, N, iteration_counter, XLIM, start_function, start_function_param)
     for i in range(len(SCHEMES)):
         if SCHEMES[i] is not None:
             if IS_RUNNING:
                 lines[i].set_data(X, U2_arr[i])
+                analytical_lines[i].set_data(X, analytical_U)
                 U1_arr[i], U2_arr[i] = scheme_step(U1_arr[i], U2_arr[i], SCHEMES[i], r, h, STEPS)
-                iteration_counter += STEPS
-                steps_texts[i].set_text('шаги: {}\nслой по времени: {}'.format(STEPS, iteration_counter))
-                #print(iter)
 
-    return lines + steps_texts
+                steps_texts[i].set_text('шаги: {}\nслой по времени: {}'.format(STEPS, iteration_counter+STEPS))
+                #print(iter)
+    iteration_counter += STEPS
+    return lines + analytical_lines +steps_texts
 
 
 def up(entry):#для кнопочки увеличения шага
@@ -161,6 +167,7 @@ def go_to_iteration(entry):#переход к итерации
             if target_iteration < iteration_counter:
                 U1_arr[i] = start_function(start_function_param, X)
                 U2_arr[i] = laying_L(U1_arr[i], r, h, 1)
+                #U2_arr[i] = analytical_solution(r, h, N, 1, XLIM, start_function, start_function_param)
             U1_arr[i], U2_arr[i] = scheme_step(U1_arr[i], U2_arr[i], SCHEMES[i], r, h, steps_to_target)
             lines[i].set_data(X, U2_arr[i])
     iteration_counter = target_iteration
@@ -174,6 +181,7 @@ def set_r_h(entry_r, entry_h):#для установки числа Курант
     global r, h, X, N, X_MAX
     r = target_r
     h = float(X_MAX)/target_N
+    N = target_N
     X = np.linspace(0, X_MAX, target_N)
     start()
 

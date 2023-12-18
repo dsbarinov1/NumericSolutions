@@ -1,19 +1,21 @@
 import numpy as np
 from numba import jit, float64, boolean, int32, int64
 from testing_schemes import *
+
+"""
 B = 3.0
 SIGMA = 1.0
 SHIFT = 4.0
-
 @jit('float64[:](float64[:], float64, float64, float64)', nopython=True)
 def double_gauss_func(x, B, SIGMA, SHIFT):
     g1 = np.divide(np.subtract(x,B),SIGMA)
     g2 = np.divide(np.subtract(x, B+SHIFT), SIGMA)
     return np.exp( -0.5 * np.power(g1, 2.0)) + np.exp( -0.5 * np.power(g2, 2.0))
+"""
 
 
 #святой говнокод(зато понятно нумбе)
-#Автоматическое заполнение P для метода прогонки
+#Автоматическое заполнение P для метода обратной характеристики
 @jit('float64(float64, int64, float64[:])', nopython=True)
 def P(x: float, idx: int, coords: np.ndarray)->float:
     res = 1
@@ -99,7 +101,6 @@ def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h:
         u_matrix = fill_matrix(u3.size, u_shift, P_arr[8:])
         for step in range(STEPS):
             C = fill_C(u1,u2,dots_arr,P_arr)
-            #u3 = scipy.linalg.solve_banded(u_matrix, C)
             u3 = np.linalg.solve(u_matrix, C)
             #print(u3)
             u1 = np.copy(u2)
@@ -107,24 +108,42 @@ def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h:
     return u1, u2
 
 
+@jit('float64[:](float64, float64, int64, int64, float64, float64)', nopython=True)
+def fill_new_x(X_MIN, X_MAX, N, iteration, r, h):
+    X = np.linspace(X_MIN, X_MAX, N)
+    new_X = X - iteration * r * h
+    for i in range(len(new_X)):
+        new_X[i]-=r * h*(2*i/len(new_X))#хз что за фигня но только так сходится
+        while new_X[i] <= X_MIN:
+            new_X[i] += X_MAX
+    return new_X
+
+
+def analytical_solution(r, h, N, iteration, X_LIM, f0, f0_param):
+    return f0(f0_param, fill_new_x(X_LIM[0], X_LIM[1], N, iteration, r, h))
+
+
 #Для отдельного тестирования запустите сам файл computation.py
 if __name__ == '__main__':
     import time
-    r = 0.8
+    r = 0.1
     h = 0.1
     X_MAX = 30
+    from start_functions import double_gauss_func
     X = np.linspace(0, X_MAX, int(X_MAX/h))
-    U2 = double_gauss_func(X, B, SIGMA, SHIFT)
+    U2 = double_gauss_func(5,X)
     test_scheme1 = np.array([[False, False, False, False],
                             [True, True, True, False],
                             [False, False, True, False]])
-    test_method(laying_L, 1, [U2, r, h, 1000])
-    test_method(scheme_step, 2, [U2, U2, test_scheme1, r, h, 1000])
+    test_method(laying_L, 1, [U2, r, h, 100])
+    test_method(scheme_step, 2, [U2, U2, test_scheme1, r, h, 100])
+    test_method(analytical_solution, 1, [r, h, 300, 100, (0, X_MAX), double_gauss_func, 5])
+
 
     U1_test2 = U2
     U2_test2 = laying_L(U2, r, h, 1)
     test_scheme2 = np.array([[ True,  True,  True, False],
                             [False,  True,  True, False],
                             [False, False,  True, False]])
-    test_method(stairs_step, 2, [U1_test2, U2_test2, r, h, 1000])
-    test_method(scheme_step, 2, [U2, U2_test2, test_scheme2, r, h, 1000])
+    test_method(stairs_step, 2, [U1_test2, U2_test2, r, h, 100])
+    test_method(scheme_step, 2, [U2, U2_test2, test_scheme2, r, h, 100])

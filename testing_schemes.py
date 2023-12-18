@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 import time
 
@@ -50,11 +52,13 @@ def stairs_step(u1, u2, r, h,STEPS=1):
 
 def test_method(func, ret_cnt, args):
     start = time.time()
+    u0=copy.deepcopy(args[0])
     if ret_cnt == 1:
         u_test = func(*args)
     elif ret_cnt == 2:
         _, u_test = func(*args)
-    print(time.time() - start, u_test[:5])
+    x = np.argmax(u_test) - np.argmax(u0)
+    print(time.time() - start, u_test[:5], x)
 
 
 
