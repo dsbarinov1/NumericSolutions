@@ -31,7 +31,7 @@ def P(x: float, idx: int, coords: np.ndarray)->float:
 #вычисление части, не зависящей от точек на верхнем слое в методе обратной характеристики
 @jit('float64[:](float64[:], float64[:], int64[:,:], float64[:])', nopython=True, parallel=True)
 def fill_C(u1: np.ndarray, u2: np.ndarray, dots_arr: np.ndarray, P_arr: np.ndarray)->np.ndarray:
-    C = np.zeros(u1.size)
+    C = np.zeros(u1.size-1)
     for i in range(C.size):
         dots = dots_arr[i]
         u1_i = u1[dots]
@@ -66,7 +66,7 @@ def fill_matrix(n: int, u_shift: int, u3_P: np.ndarray)->np.ndarray:
 #Не включайте jit, из-за него в неявных методах откуда-то возникают Nan
 #@jit('UniTuple(float64[:], 2)(float64[:], float64[:], boolean[:,:], float64, float64, int64)',nopython=True)
 def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h: float, STEPS: int = 1)->tuple[np.ndarray, np.ndarray]:
-    u3 = np.zeros(u1.size)
+    u3 = np.zeros(u1.size-1)
     dots_arr = fill_dots_arr(u3.size)
     initial_dots = np.arange(1, 5, dtype=np.int64)
     level_modifications = [r,0,-r]
@@ -95,6 +95,7 @@ def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h:
         for _ in range(STEPS):
             C = fill_C(u1, u2, dots_arr, P_arr)
             u3 = np.roll(C, u_shift)
+            u3 = np.append(u3, u3[0])
             u1 = np.copy(u2)
             u2 = np.copy(u3)
     else:
@@ -102,7 +103,7 @@ def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h:
         for step in range(STEPS):
             C = fill_C(u1,u2,dots_arr,P_arr)
             u3 = np.linalg.solve(u_matrix, C)
-            #print(u3)
+            u3 = np.append(u3, u3[0])
             u1 = np.copy(u2)
             u2 = np.copy(u3)
     return u1, u2
@@ -113,14 +114,14 @@ def fill_new_x(X_MIN, X_MAX, N, iteration, r, h):
     X = np.linspace(X_MIN, X_MAX, N)
     new_X = X - iteration * r * h
     for i in range(len(new_X)):
-        new_X[i]-=r * h*(2*i/len(new_X))#хз что за фигня но только так сходится
         while new_X[i] <= X_MIN:
             new_X[i] += X_MAX
     return new_X
 
 
-def analytical_solution(r, h, N, iteration, X_LIM, f0, f0_param):
-    return f0(f0_param, fill_new_x(X_LIM[0], X_LIM[1], N, iteration, r, h))
+def analytical_solution(r, N, iteration, X_LIM, f0, f0_param):
+    new_h = float(X_LIM[1]-X_LIM[0]) / (N - 1)
+    return f0(f0_param, fill_new_x(X_LIM[0], X_LIM[1], N, iteration, r, new_h))
 
 
 #Для отдельного тестирования запустите сам файл computation.py

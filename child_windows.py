@@ -205,7 +205,7 @@ class StartConfigurationWindow():
         self.custom_func_entry = ttk.Entry(self.window, width=25)
         self.custom_func_entry.grid(column=1, row=0)
         self.custom_func_entry.place(x=470, y=250)
-        self.custom_func_entry.insert(0, "cos(x)") # Установка начального значения
+        self.custom_func_entry.insert(0, "sin(x)") # Установка начального значения
         self.custom_func_entry.place_forget()
         self.combobox.current(0)  # индекс списка, график кот. будет по умолчанию
         self.combobox.bind('<<ComboboxSelected>>', self.combobox_modified)

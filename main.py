@@ -64,8 +64,8 @@ def init():#функция для подготовки анимации к за�
     for i in range(len(U1_arr)):
         U1_arr[i] = start_function(start_function_param, X)
     for i in range(len(U2_arr)):
-        U2_arr[i] = laying_L(U1_arr[i], r, h, 1)
-        #U2_arr[i] = analytical_solution(r, h, N, 1, XLIM, start_function, start_function_param)
+        #U2_arr[i] = laying_L(U1_arr[i], r, h, 1)
+        U2_arr[i] = analytical_solution(r, N, 1, XLIM, start_function, start_function_param)
     Y_MIN = np.min(U1_arr[0])
     Y_MAX = np.max(U1_arr[0])
     YLIM = (Y_MIN - 0.5, Y_MAX + 0.5)
@@ -96,7 +96,7 @@ def init():#функция для подготовки анимации к за�
 
 def animate(iter):#сама анимация
     global SCHEMES, IS_RUNNING, lines, help_lines, X, U2_arr, U1_arr, r, h, STEPS, steps_texts, iteration_counter, analytical_lines
-    analytical_U = analytical_solution(r, h, N, iteration_counter, XLIM, start_function, start_function_param)
+    analytical_U = analytical_solution(r, N, iteration_counter, XLIM, start_function, start_function_param)
     for i in range(len(SCHEMES)):
         if SCHEMES[i] is not None:
             if IS_RUNNING:
@@ -166,8 +166,8 @@ def go_to_iteration(entry):#переход к итерации
         if SCHEMES[i] is not None:
             if target_iteration < iteration_counter:
                 U1_arr[i] = start_function(start_function_param, X)
-                U2_arr[i] = laying_L(U1_arr[i], r, h, 1)
-                #U2_arr[i] = analytical_solution(r, h, N, 1, XLIM, start_function, start_function_param)
+                #U2_arr[i] = laying_L(U1_arr[i], r, h, 1)
+                U2_arr[i] = analytical_solution(r, N, 1, XLIM, start_function, start_function_param)
             U1_arr[i], U2_arr[i] = scheme_step(U1_arr[i], U2_arr[i], SCHEMES[i], r, h, steps_to_target)
             lines[i].set_data(X, U2_arr[i])
     iteration_counter = target_iteration
