@@ -1,5 +1,8 @@
 # Альфа версия приложения
 
+#ССЫЛКА НА ИСПОЛНЯЕМЫЙ ФАЙЛ ПОД WINDOWS
+https://disk.yandex.ru/d/kIbgtO86a_LddQ
+
 
 ## TODO чек-лист
 
