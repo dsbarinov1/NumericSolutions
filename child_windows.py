@@ -121,6 +121,7 @@ class StartConfigurationWindow():
         self.last_state = False
 
     def draw_graph(self, func):
+        ax = self.ax
         if self.f_names.index(self.combobox.get()) != self.custom_func_idx:
             d = round(self.scale_par.get(), 1)
         else:
@@ -128,29 +129,18 @@ class StartConfigurationWindow():
         if self.draw_flag == False:
             self.graphs_x = np.linspace(0, 31.4159265359, 1001)
             graph_val = [func(d, x) for x in self.graphs_x]
-            fig = Figure(figsize=(3.5, 2.5), dpi=100)
-            ax = fig.add_subplot()
             ax.plot(self.graphs_x, graph_val, "-r", linewidth=3)
             ax.grid(color='black', linewidth=0.5)
             ax.set_title(f'{self.combobox.get()}')
-
-            self.fig_canvas = FigureCanvasTkAgg(fig, master=self.window)
-            #self.fig_canvas.get_tk_widget().place(relx=0, rely=0, anchor="nw")
-            self.fig_canvas.get_tk_widget().pack(anchor=tkinter.NW, fill=tkinter.Y, expand=1)
             self.draw_flag = True
         else:
             graph_val = [func(d, x) for x in self.graphs_x]
-            fig = Figure(figsize=(3.5, 2.5), dpi=100)
-            ax = fig.add_subplot()
             ax.plot(self.graphs_x, graph_val, "-r", linewidth=3)
             ax.grid(color='black', linewidth=0.5)
             ax.set_title(f'{self.combobox.get()}')
-            self.fig_canvas = FigureCanvasTkAgg(fig, master=self.window)
-            self.fig_canvas.get_tk_widget().place(relx=0, rely=0, anchor="nw")
-
+        self.fig_canvas.draw()
     def clear_my_draw(self):
-        for item in self.fig_canvas.get_tk_widget().find_all():
-            self.fig_canvas.get_tk_widget().delete(item)
+        self.ax.clear()
 
     def btn_apply_func(self):
         self.clear_my_draw()
@@ -211,7 +201,10 @@ class StartConfigurationWindow():
         self.scale_par = ttk.Scale(self.window, orient=tkinter.HORIZONTAL, length=180, from_=0.0, to=9.9, value=5)
         self.scale_par.place(relx=490/700, rely=160/400, anchor="nw")
         self.scale_par.bind("<ButtonRelease-1>", self.scale_modified)
-
+        self.fig = Figure(figsize=(3.5, 2.5), dpi=100)
+        self.ax = self.fig.add_subplot(111)
+        self.fig_canvas = FigureCanvasTkAgg(self.fig, master=self.window)
+        self.fig_canvas.get_tk_widget().pack(anchor=tkinter.NW, fill=tkinter.Y, expand=1)
         self.draw_flag = False
         self.draw_graph(gauss_func)
 
