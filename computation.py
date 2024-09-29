@@ -1,7 +1,6 @@
 import numpy as np
 from numba import jit, float64, boolean, int32, int64
 from testing_schemes import *
-
 """
 B = 3.0
 SIGMA = 1.0

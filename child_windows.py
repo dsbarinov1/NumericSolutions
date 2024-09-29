@@ -126,7 +126,7 @@ class StartConfigurationWindow():
         else:
             d = self.custom_func_entry.get()
         if self.draw_flag == False:
-            self.graphs_x = np.linspace(0, 10, 1001)
+            self.graphs_x = np.linspace(0, 31.4159265359, 1001)
             graph_val = [func(d, x) for x in self.graphs_x]
             fig = Figure(figsize=(3.5, 2.5), dpi=100)
             ax = fig.add_subplot()
@@ -135,7 +135,8 @@ class StartConfigurationWindow():
             ax.set_title(f'{self.combobox.get()}')
 
             self.fig_canvas = FigureCanvasTkAgg(fig, master=self.window)
-            self.fig_canvas.get_tk_widget().place(x=2, y=2)
+            #self.fig_canvas.get_tk_widget().place(relx=0, rely=0, anchor="nw")
+            self.fig_canvas.get_tk_widget().pack(anchor=tkinter.NW, fill=tkinter.Y, expand=1)
             self.draw_flag = True
         else:
             graph_val = [func(d, x) for x in self.graphs_x]
@@ -145,7 +146,7 @@ class StartConfigurationWindow():
             ax.grid(color='black', linewidth=0.5)
             ax.set_title(f'{self.combobox.get()}')
             self.fig_canvas = FigureCanvasTkAgg(fig, master=self.window)
-            self.fig_canvas.get_tk_widget().place(x=2, y=2)
+            self.fig_canvas.get_tk_widget().place(relx=0, rely=0, anchor="nw")
 
     def clear_my_draw(self):
         for item in self.fig_canvas.get_tk_widget().find_all():
@@ -180,64 +181,57 @@ class StartConfigurationWindow():
             self.last_state = state
             if not state:
                 self.custom_func_entry.place_forget()
-                self.label_parameter_d.place(x=470, y=125)
-                self.label_just_d.place(x=470, y=220)
-                self.scale_par.place(x=490, y=160)
-                self.label_0.place(x=488, y=185)
-                self.label_5.place(x=575, y=185)
-                self.label_10.place(x=660, y=185)
+                self.label_parameter_d.place(relx=470/700, rely=125/400, anchor="nw")
+                self.label_just_d.place(relx=470/700, rely=220/400, anchor="nw")
+                self.scale_par.place(relx=490/700, rely=160/400, anchor="nw")
+                self.label_0.place(relx=488/700, rely=185/400, anchor="nw")
             else:
-                self.custom_func_entry.place(x=470, y=250)
+                self.custom_func_entry.place(relx=470/700, rely=250/400, anchor="nw")
                 self.label_parameter_d.place_forget()
                 self.label_just_d.place_forget()
                 self.scale_par.place_forget()
                 self.label_0.place_forget()
-                self.label_5.place_forget()
-                self.label_10.place_forget()
         self.btn_apply_func()
 
     def init_child(self):
-        self.window.geometry("700x385+600+300")
+        self.window.geometry("700x400")
         self.window.title("Выбор начального условия")
-        self.window.resizable(False, False)
+        #self.window.resizable(False, False)
 
         self.combobox = ttk.Combobox(self.window, values=self.f_names, font=('Arial', 11))
         self.custom_func_entry = ttk.Entry(self.window, width=25)
         self.custom_func_entry.grid(column=1, row=0)
-        self.custom_func_entry.place(x=470, y=250)
+        self.custom_func_entry.place(relx=470/700, rely=250/400, anchor="nw")
         self.custom_func_entry.insert(0, "sin(x)") # Установка начального значения
         self.custom_func_entry.place_forget()
         self.combobox.current(0)  # индекс списка, график кот. будет по умолчанию
         self.combobox.bind('<<ComboboxSelected>>', self.combobox_modified)
-        self.combobox.place(x=470, y=70)
-        
+        self.combobox.place(relx=470/700, rely=70/400, anchor="nw")
+
         self.scale_par = ttk.Scale(self.window, orient=tkinter.HORIZONTAL, length=180, from_=0.0, to=9.9, value=5)
-        self.scale_par.place(x=490, y=160)
+        self.scale_par.place(relx=490/700, rely=160/400, anchor="nw")
         self.scale_par.bind("<ButtonRelease-1>", self.scale_modified)
 
         self.draw_flag = False
         self.draw_graph(gauss_func)
 
         btn_cancel = ttk.Button(self.window, text='Закрыть', command=self.on_closing)
-        btn_cancel.place(x=600, y=352)
+        btn_cancel.place(relx=600/700, rely=352/400, anchor="nw")
 
         btn_ok1 = ttk.Button(self.window, text='Ок', command=self.btn_ok_func)
-        btn_ok1.place(x=500, y=352)
+        btn_ok1.place(relx=500/700, rely=352/400, anchor="nw")
 
         btn_apply = ttk.Button(self.window, text="Применить", command=self.btn_apply_func)
 
-        btn_apply.place(x=535, y=290)
+        btn_apply.place(relx=535/700, rely=290/400, anchor="nw")
 
         label_start_cond = ttk.Label(self.window, text="Начальное условие:", font=('Arial', 12))
-        label_start_cond.place(x=470, y=40)
+        label_start_cond.place(relx=470/700, rely=40/400, anchor="nw")
         self.label_parameter_d = ttk.Label(self.window, text="Параметр D:", font=('Arial', 12))
-        self.label_parameter_d.place(x=470, y=125)
+        self.label_parameter_d.place(relx=470/700, rely=125/400, anchor="nw")
         self.label_just_d = ttk.Label(self.window, text=f"D = {round(self.scale_par.get(), 1)}", font=('Arial', 12))
-        self.label_just_d.place(x=470, y=220)
+        self.label_just_d.place(relx=470/700, rely=220/400, anchor="nw")
 
-        self.label_0 = ttk.Label(self.window, text="0")
-        self.label_0.place(x=488, y=185)
-        self.label_5 = ttk.Label(self.window, text="5")
-        self.label_5.place(x=575, y=185)
-        self.label_10 = ttk.Label(self.window, text="10")
-        self.label_10.place(x=660, y=185)
+        self.label_0 = ttk.Label(self.window, text="0                   5                   10")
+        self.label_0.place(relx=488/700, rely=185/400, anchor="nw")
+

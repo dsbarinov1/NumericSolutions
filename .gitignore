@@ -35,3 +35,7 @@
 /main.spec
 /.idea/
 /setup.py
+.gitignore
+./build
+./dist
+"./для доклада"

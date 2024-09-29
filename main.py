@@ -5,7 +5,7 @@ matplotlib.use('TkAgg')
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from mpl_toolkits.axes_grid1.inset_locator import InsetPosition
-from  matplotlib.widgets import Button
+from matplotlib.widgets import Button
 from functools import partial
 import sys
 from matplotlib import animation
@@ -13,7 +13,9 @@ from computation import analytical_solution, scheme_step
 from child_windows import SchemeWindow, draw_scheme_area, StartConfigurationWindow
 import start_functions
 import os
-from testing_schemes import laying_L
+#from testing_schemes import laying_L
+import time
+import threading
 
 
 def resource_path(relative_path):#для того чтобы экзешник не крашился
@@ -52,7 +54,7 @@ U1_arr = [start_function(start_function_param, X)]*4
 U2_arr = [start_function(start_function_param, X)]*4
 STEPS = SAVED_STEPS = 1
 SCHEMES = [None]*4
-IS_RUNNING = False
+IS_RUNNING = True
 DELETE_MODE = False
 pause_button = None#объявится в основном окне, знаю что говнокод, но каждый раз тащить через параметры еще хуже
 anim = None#та же фигня
@@ -159,6 +161,7 @@ def start():#для кнопочки запуска
 
 
 def go_to_iteration(entry):#переход к итерации
+    start = time.time()
     global iteration_counter, SCHEMES, lines, iteration_counter, IS_RUNNING
     target_iteration = int(entry.get())
     steps_to_target = abs(target_iteration - 1) if target_iteration < iteration_counter else target_iteration - iteration_counter
@@ -171,6 +174,7 @@ def go_to_iteration(entry):#переход к итерации
             U1_arr[i], U2_arr[i] = scheme_step(U1_arr[i], U2_arr[i], SCHEMES[i], r, h, steps_to_target)
             lines[i].set_data(X, U2_arr[i])
     iteration_counter = target_iteration
+    print(time.time() - start)
     if not IS_RUNNING:
         stop_resume()
 
@@ -327,19 +331,39 @@ def on_closing():
         sys.exit(0)
 
 
-root = tkinter.Tk()
+class ResizeTracker:
+    """ Toplevel windows resize event tracker. """
 
+    def __init__(self, toplevel):
+        self.toplevel = toplevel
+        self.width, self.height = toplevel.winfo_width(), toplevel.winfo_height()
+        self._func_id = None
+
+    def bind_config(self):
+        self._func_id = self.toplevel.bind("<Configure>", self.resize)
+
+    def resize(self, event):
+        if(event.widget == self.toplevel and
+           (self.width != event.width or self.height != event.height)):
+            #if (IS_RUNNING):
+            #    stop_resume()
+            print(f'{event.widget=}: {event.height=}, {event.width=}\n')
+            self.width, self.height = event.width, event.height
+
+
+root = tkinter.Tk()
 
 def main():
     global app, stopRead, root
     root.geometry("1000x700")
     root.protocol("WM_DELETE_WINDOW", on_closing)
     app = MainWindow(root)
+    #tracker = ResizeTracker(root)
+    #tracker.bind_config()
     root.mainloop()
 
 
 if __name__ == '__main__':
     anim = animation.FuncAnimation(fig, animate, init_func=init,
-                                   frames=None, interval=20, blit=False)
-    anim.pause()
+                                   frames=None, interval=20, blit=False, cache_frame_data=False)
     main()
