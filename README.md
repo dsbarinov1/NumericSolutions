@@ -35,7 +35,7 @@
 #### Пожалуйста, нажмите кнопку "Установить r и n", чтобы все ваши схемы были посчитаны с заданными параметрами.
 
 <picture>
-  <img src="images/git1[1](1).png">
+  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/AlexandraDelaya-patch-1/images/git1%5B1%5D(1).png">
 </picture>
  
 ### Слева сверху вы можете видеть кнопку "Задать начальное условие". 
