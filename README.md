@@ -7,14 +7,14 @@
 
 ### Чтобы добавить схему, убедитесь, что находитесь в режиме "Добавление" (кнопка смены режима находится слева сверху) и нажмите на иконку "добавить схему":
 <picture>
-  <img src="https://github.com/AlexandraDelaya/New/blob/main/images/добавление.png">
+  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/main/images/plus.png">
 </picture>
 
 ### Чтобы удалить схему, убедитесь, что находитесь в режиме "Удаление" (кнопка смены режима находится слева сверху) и нажмите на схему, которую хотите удалить.
 
 ### В появившейся сетке выставите ту схему, которая Вам нужна, нажимая на узлы сетки. После нажмите "Применить":
 <picture>
-  <img src="https://github.com/AlexandraDelaya/New/blob/main/images/схема.png">
+  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/main/images/scheme.png">
 </picture>
 
 ### Вы увидите график, описывающий изменение начальной функции в соответствии с заданной схемой при изменении временного слоя.
@@ -26,21 +26,21 @@
 #### Далее вы можете видеть поле, в котором можно выставить произвольное значение временного слоя при помощи клавиатуры, и кнопку "Перейти на временной слой", начинающую счёт всех ваших графиков с заданного вами слоя.
 
 <picture>
-  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/AlexandraDelaya-patch-1/images/врем слой.png">
+  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/main/images/time.png">
 </picture>
 
 ### В правом верхнем углу находятся настройки шага по времени.
 #### Вы можете изменять его на 1 при помощи кнопок справа и слева от поля задания шага или установить собственное значение при помощи клавиатуры. После нажатия кнопки "Установить шаг" все ваши графики могут быть посчитаны с выставленным шагом. Пожалуйста, начните или продолжите счёт, чтобы эффект был заметен.
 
 <picture>
-  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/AlexandraDelaya-patch-1/images/шаг.png">
+  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/main/images/step.png">
 </picture>
 
 ### Слева во второй строке вы можете установить значения r (числа Куранта) и n (шага по x).
 #### Пожалуйста, нажмите кнопку "Установить r и n", чтобы все ваши схемы были посчитаны с заданными параметрами.
 
 <picture>
-  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/AlexandraDelaya-patch-1/images/р и н.png">
+  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/main/images/rn.png">
 </picture>
  
 ### Слева сверху вы можете видеть кнопку "Задать начальное условие". 
@@ -48,10 +48,10 @@
 #### Также вы можете менять дисперсию функции при помощи ползунка.
 
 <picture>
-  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/AlexandraDelaya-patch-1/images/дом начальное условие.png">
+  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/main/images/home start.png">
 </picture>
 <picture>
-  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/AlexandraDelaya-patch-1/images/стартовое условие.png">
+  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/main/images/start.png">
 </picture>
 
 ### Внизу экрана вы можете видеть ряд кнопок настройки, это кнопки:
@@ -64,12 +64,12 @@
 #### "Сохранение": позволяет сохранить изображение вашего графика в формате png на ваш компьютер.
 
 <picture>
-  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/AlexandraDelaya-patch-1/images/внизу.png">
+  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/main/images/down.png">
 </picture>
 
 ### Кнопка "Инструкция" открывает данную инструкцию.
 #### Вы можете открыть её и уточнить функционал программы в любой момент.
 
 <picture>
-  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/AlexandraDelaya-patch-1/images/инструкция.png">
+  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/main/images/instruction.png">
 </picture>
