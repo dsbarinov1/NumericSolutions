@@ -2,7 +2,7 @@
 
 ### Запустив приложение, Вы можете видеть следующий экран:
 <picture>
-  <img src="https://github.com/AlexandraDelaya/New/blob/main/images/дом.png">
+  <img src="https://github.com/AlexandraDelaya/NumericSolutions/blob/main/images/home.png">
 </picture>
 
 ### Чтобы добавить схему, убедитесь, что находитесь в режиме "Добавление" (кнопка смены режима находится слева сверху) и нажмите на иконку "добавить схему":
