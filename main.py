@@ -407,7 +407,7 @@ class MainWindow(tkinter.Frame):
         instruction_button = self.create_styled_button(
             self.f_mid,
             "Инструкция",
-            #   command=
+               command=lambda : webbrowser.open("https://github.com/dsbarinov1/NumericSolutions/blob/master/README.md")
             #   width=
         )
         #instruction_button.bind("Инструкция", lambda e: callback("http://www.example.com"))
