@@ -6,6 +6,8 @@ https://disk.yandex.ru/d/kIbgtO86a_LddQ
 
 # Инструкция
 
+_Если у Вас пропали изображения, перезагрузите страницу_
+
 ### Запустив приложение, Вы можете видеть следующий экран:
 <picture>
   <img src="https://github.com/dsbarinov1/NumericSolutions/blob/master/images/home.png">
