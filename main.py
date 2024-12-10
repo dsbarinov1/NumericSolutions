@@ -13,10 +13,11 @@ from computation import analytical_solution, scheme_step
 from child_windows import SchemeWindow, draw_scheme_area, StartConfigurationWindow
 import start_functions
 import os
-#from testing_schemes import laying_L
+from testing_schemes import laying_L
+from tkinter import ttk
+import tkinter.font
 import time
-import threading
-
+import webbrowser
 
 def resource_path(relative_path):#для того чтобы экзешник не крашился
     try:
@@ -60,6 +61,11 @@ pause_button = None#объявится в основном окне, знаю ч
 anim = None#та же фигня
 
 
+#custom_font_path = "Arial.ttf"
+global_button_font = tkinter.font.Font(family="Arial", size=25, name="custom_font")
+#global_button_font.configure(family=custom_font_path)
+
+
 def init():#функция для подготовки анимации к запуску
     global iteration_counter, U1_arr, U2_arr, steps_texts, axs, plt_buttons, start_function, start_function_param, Y_MIN, Y_MAX, YLIM, analytical_lines
     iteration_counter = 1
@@ -91,8 +97,10 @@ def init():#функция для подготовки анимации к за�
             steps_texts[i] = steps_text
         else:
             ax.axis('off')
-            ax.set(xlim=(0, STOCK_IMG.shape[1]), ylim=(STOCK_IMG.shape[0], 0))
-            ax.imshow(STOCK_IMG, origin="upper")
+            # ax.set(xlim=(0, STOCK_IMG.shape[1]), ylim=(STOCK_IMG.shape[0], 0))
+            ax.set(xlim=XLIM, ylim=YLIM)
+            ax.imshow(STOCK_IMG, extent=(XLIM[0], XLIM[1], YLIM[0], YLIM[1]), aspect='auto')
+            # ax.imshow(STOCK_IMG, origin="upper")
     return steps_texts + analytical_lines
 
 
@@ -161,7 +169,7 @@ def start():#для кнопочки запуска
 
 
 def go_to_iteration(entry):#переход к итерации
-    start = time.time()
+    #start = time.time()
     global iteration_counter, SCHEMES, lines, iteration_counter, IS_RUNNING
     target_iteration = int(entry.get())
     steps_to_target = abs(target_iteration - 1) if target_iteration < iteration_counter else target_iteration - iteration_counter
@@ -174,7 +182,7 @@ def go_to_iteration(entry):#переход к итерации
             U1_arr[i], U2_arr[i] = scheme_step(U1_arr[i], U2_arr[i], SCHEMES[i], r, h, steps_to_target)
             lines[i].set_data(X, U2_arr[i])
     iteration_counter = target_iteration
-    print(time.time() - start)
+    #print(time.time() - start)
     if not IS_RUNNING:
         stop_resume()
 
@@ -212,56 +220,239 @@ def click_wrapper(window):#обработка нажатия на график
     return onclick
 
 
-class MainWindow(tkinter.Frame):#основное окошко
+class MainWindow(tkinter.Frame):
     def __init__(self, parent):
-        self.childWindows = [None]*5
+        self.childWindows = [None] * 5
         tkinter.Frame.__init__(self, parent)
+
         self.parent = parent
         self.parent.title("Главное меню")
-        self.schemes = [None]*4
-        self.f_top = tkinter.Frame(self, borderwidth=1)
-        self.f_mid = tkinter.Frame(self, borderwidth=1)
-        self.f_bot = tkinter.Frame(self, borderwidth=1)
-        self.f_top.pack(fill=tkinter.BOTH, expand=True, padx=5, pady=5)
-        self.f_mid.pack(fill=tkinter.BOTH, expand=True, padx=5, pady=5)
-        self.f_bot.pack(fill=tkinter.BOTH, expand=True, padx=5, pady=5)
-        self.pack(fill=tkinter.BOTH,padx=5,expand=True)
-        #f_button = tkinter.Button(self.f_top, text="Выбрать функцию", width=15, command=self.choose_function)
-        #f_button.pack(padx=5, side=tkinter.LEFT)
+        self.parent.configure(bg='#121212')
+
+        self.default_width = 1200
+        self.default_height = 800
+
+
+        self.COLORS = {
+            'bg': '#121212',  # Фон
+            'button_bg': '#272727',  # Кнопки
+            'entry_bg': '#1E1E1E',  # Поля ввода
+            'text': '#FFFFFF',  # Белый текст
+            'accent': '#BB86FC'  # Фиолетовый акцент
+        }
+
+        self.schemes = [None] * 4
+
+        self.f_top = self.create_frame()
+        self.f_mid = self.create_frame()
+        self.f_bot = self.create_frame()
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.f_top.grid(row=0, column=0, sticky='nsew', padx=8, pady=8)
+        self.f_mid.grid(row=1, column=0, sticky='nsew', padx=8)
+        self.f_top.grid_rowconfigure(0, weight=1)
+        self.f_mid.grid_rowconfigure(0, weight=1)
+        self.f_bot.grid(row=2, column=0, sticky='nsew', padx=8, pady=8)
+
+        self.pack(fill=tkinter.BOTH, padx=15, expand=True)
+
+        self.title_font = tkinter.font.Font(family="Helvetica", size=25)
+
         self.plot()
-        myFont = tkinter.font.Font(size=25)
-        steps_label = tkinter.Label(self.f_top, text="Шаги:", font=myFont)
-        steps_entry = tkinter.Entry(self.f_top, font=myFont, width=5)
+        self.create_top_widgets()
+        self.create_middle_widgets()
+
+        # Настройка колонок внутри фреймов
+        for i in range(7):
+            self.f_top.grid_columnconfigure(i, weight=1)
+
+        for i in range(8):
+            self.f_mid.grid_columnconfigure(i, weight=1)
+
+    def calculate_font_size(self, current_width, current_height):
+        width_ratio = current_width / self.default_width
+        height_ratio = current_height / self.default_height
+        print(current_width, current_height, width_ratio, height_ratio)
+        scale_factor = min(width_ratio, height_ratio)
+
+        new_size = int(25 * scale_factor)
+
+        return max(25, new_size)
+
+
+
+    def create_frame(self):
+        frame = tkinter.Frame(
+            self,
+            bg=self.COLORS['bg'],
+            padx=10,
+            pady=10
+        )
+        return frame
+
+    def create_styled_button(self, parent, text, command=None, width=None):
+        button = tkinter.Button(
+            parent,
+            text=text,
+            font=global_button_font,
+            bg=self.COLORS['button_bg'],
+            fg=self.COLORS['text'],
+            activebackground=self.COLORS['accent'],
+            activeforeground=self.COLORS['text'],
+            relief='flat',
+            command=command,
+            width=width,
+            cursor='hand2',
+            pady=5,
+            border=0
+        )
+        button.bind('<Enter>', lambda e: self.on_hover(button))
+        button.bind('<Leave>', lambda e: self.on_leave(button))
+        return button
+
+    def on_hover(self, button):
+        button.configure(bg=self.COLORS['accent'])
+
+    def on_leave(self, button):
+        button.configure(bg=self.COLORS['button_bg'])
+
+    def create_styled_entry(self, parent, width=5):
+        entry = tkinter.Entry(
+            parent,
+            font=global_button_font,
+            width=width,
+            bg=self.COLORS['entry_bg'],
+            fg=self.COLORS['text'],
+            relief='flat',
+            justify='center'
+        )
+        return entry
+
+    def create_top_widgets(self):
+
+        # Метка шагов
+        steps_label = tkinter.Label(
+            self.f_top,
+            text="Шаги:",
+            font=self.title_font,
+            bg=self.COLORS['bg'],
+            fg=self.COLORS['text']
+        )
+
+        # Поле ввода шагов
+        steps_entry = self.create_styled_entry(self.f_top)
         steps_entry.delete(0, tkinter.END)
         steps_entry.insert(0, "1")
-        delete_button = tkinter.Button(self.f_top, text="Режим: добавление", width=20 , font=myFont, background='#c3c3c3')
-        choose_start_button = tkinter.Button(self.f_top, text="Задать начальное условие", width=35, command=self.choose_function, font=myFont, background='#c3c3c3')
-        delete_button.configure(command=partial(change_mode,delete_button))
-        plus_button = tkinter.Button(self.f_top, text="+", width=5, command=partial(up,steps_entry) , font=myFont, background='#c3c3c3')
-        minus_button = tkinter.Button(self.f_top, text="-", width=5, command=partial(down,steps_entry), font=myFont, background='#c3c3c3')
-        set_button = tkinter.Button(self.f_top, text="Установить шаг", command=partial(set_steps,steps_entry), font=myFont, background='#c3c3c3')
-        for obj in [set_button, plus_button, steps_entry, minus_button, steps_label]:
-            obj.pack(padx=5, side=tkinter.RIGHT)
-        delete_button.pack(padx=5, side=tkinter.LEFT)
-        choose_start_button.pack(padx=5, side=tkinter.LEFT)
-        r_entry = tkinter.Entry(self.f_mid, font=myFont, width=5)
-        h_entry = tkinter.Entry(self.f_mid, font=myFont, width=5)
-        r_button = tkinter.Button(self.f_mid, text="Установить r и n", width=15,command=partial(set_r_h,r_entry,h_entry), font=myFont, background='#c3c3c3')
-        start_b = tkinter.Button(self.f_mid, text="Начать", width=10,command=start, font=myFont, background='#c3c3c3')
+
+        # Создание кнопок
+        delete_button = self.create_styled_button(
+            self.f_top,
+            "Режим: добавление",
+            command=lambda: change_mode(delete_button),
+            width=20
+        )
+
+        choose_start_button = self.create_styled_button(
+            self.f_top,
+            "Задать начальное условие",
+            command=self.choose_function,
+            width=35
+        )
+
+        plus_button = self.create_styled_button(
+            self.f_top,
+            "+",
+            command=lambda: up(steps_entry),
+            width=5
+        )
+
+        minus_button = self.create_styled_button(
+            self.f_top,
+            "-",
+            command=lambda: down(steps_entry),
+            width=5
+        )
+
+        set_button = self.create_styled_button(
+            self.f_top,
+            "Установить шаг",
+            command=lambda: set_steps(steps_entry)
+        )
+
+        # Размещение виджетов с использованием grid
+        delete_button.grid(row=0, column=0, padx=8, sticky='nsew')
+        choose_start_button.grid(row=0, column=1, padx=8, sticky='nsew')
+        steps_label.grid(row=0, column=2, padx=8, sticky='nsew')
+        minus_button.grid(row=0, column=3, padx=8, sticky='nsew')
+        steps_entry.grid(row=0, column=4, padx=8, sticky='nsew')
+        plus_button.grid(row=0, column=5, padx=8, sticky='nsew')
+        set_button.grid(row=0, column=6, padx=8, sticky='nsew')
+
+    def create_middle_widgets(self):
+
+        # Поля ввода
+        r_entry = self.create_styled_entry(self.f_mid)
+        h_entry = self.create_styled_entry(self.f_mid)
+
+        # Кнопки
+        r_button = self.create_styled_button(
+            self.f_mid,
+            "Установить r и n",
+            command=lambda: set_r_h(r_entry, h_entry),
+            width=15
+        )
+        # Кнопка инструкции
+        instruction_button = self.create_styled_button(
+            self.f_mid,
+            "Инструкция",
+            #   command=
+            #   width=
+        )
+        #instruction_button.bind("Инструкция", lambda e: callback("http://www.example.com"))
+
+        start_b = self.create_styled_button(
+            self.f_mid,
+            "Начать",
+            command=start,
+            width=10
+        )
+
         global pause_button, r, h, STEPS, N
-        pause_button = tkinter.Button(self.f_mid, text="Стоп", width=10, command=stop_resume, font=myFont, background='#c3c3c3')
-        iteration_entry = tkinter.Entry(self.f_mid, font=myFont, width=5)
+        pause_button = self.create_styled_button(
+            self.f_mid,
+            "Стоп",
+            command=stop_resume,
+            width=10
+        )
+
+        iteration_entry = self.create_styled_entry(self.f_mid)
         iteration_entry.delete(0, tkinter.END)
         iteration_entry.insert(0, str(STEPS))
+
         r_entry.delete(0, tkinter.END)
         r_entry.insert(0, str(r))
+
         h_entry.delete(0, tkinter.END)
         h_entry.insert(0, str(N))
-        iteration_button = tkinter.Button(self.f_mid, text="Перейти на временной слой", command= partial(go_to_iteration,iteration_entry), font=myFont, background='#c3c3c3')
-        for obj in [iteration_button, iteration_entry, pause_button, start_b]:
-            obj.pack(padx=5, side=tkinter.RIGHT)
-        for obj in [r_button, r_entry, h_entry]:
-            obj.pack(padx=5, side=tkinter.LEFT)
+
+        iteration_button = self.create_styled_button(
+            self.f_mid,
+            "Перейти на временной слой",
+            command=lambda: go_to_iteration(iteration_entry)
+        )
+
+        # Размещение виджетов с использованием grid
+        r_button.grid(row=0, column=0, padx=8, sticky='nsew')
+        r_entry.grid(row=0, column=1, padx=8, sticky='nsew')
+        h_entry.grid(row=0, column=2, padx=8, sticky='nsew')
+        instruction_button.grid(row=0, column=3, padx=8, sticky='nsew')
+        start_b.grid(row=0, column=4, padx=8, sticky='nsew')
+        pause_button.grid(row=0, column=5, padx=8, sticky='nsew')
+        iteration_entry.grid(row=0, column=6, padx=8, sticky='nsew')
+        iteration_button.grid(row=0, column=7, padx=8, sticky='nsew')
+
 
     def plot(self):#создание графиков в окне
         global fig
@@ -332,22 +523,25 @@ def on_closing():
 
 
 class ResizeTracker:
-    """ Toplevel windows resize event tracker. """
 
     def __init__(self, toplevel):
         self.toplevel = toplevel
         self.width, self.height = toplevel.winfo_width(), toplevel.winfo_height()
         self._func_id = None
+        self.window = None
 
-    def bind_config(self):
+    def bind_config(self, window):
         self._func_id = self.toplevel.bind("<Configure>", self.resize)
+        self.window = window
 
     def resize(self, event):
         if(event.widget == self.toplevel and
            (self.width != event.width or self.height != event.height)):
-            #if (IS_RUNNING):
-            #    stop_resume()
-            print(f'{event.widget=}: {event.height=}, {event.width=}\n')
+            if self.window is not None:
+                #self.window.update_fonts(self.width, self.height)
+                new_size = int(min(event.width / 25, event.height / 15))
+                print(new_size)
+                global_button_font.configure(size=new_size)
             self.width, self.height = event.width, event.height
 
 
@@ -355,15 +549,17 @@ root = tkinter.Tk()
 
 def main():
     global app, stopRead, root
-    root.geometry("1000x700")
+    root.geometry("1200x800")
     root.protocol("WM_DELETE_WINDOW", on_closing)
     app = MainWindow(root)
+    print(global_button_font.actual())
     #tracker = ResizeTracker(root)
-    #tracker.bind_config()
+    #tracker.bind_config(app)
     root.mainloop()
 
 
 if __name__ == '__main__':
     anim = animation.FuncAnimation(fig, animate, init_func=init,
                                    frames=None, interval=20, blit=False, cache_frame_data=False)
+    anim.pause()
     main()

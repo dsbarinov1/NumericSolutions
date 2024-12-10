@@ -1,6 +1,6 @@
-import numpy as np
-from numba import jit, float64, boolean, int32, int64
+from numba import jit, float64, boolean, int32, int64, prange
 from testing_schemes import *
+import scipy.linalg
 """
 B = 3.0
 SIGMA = 1.0
@@ -29,15 +29,13 @@ def P(x: float, idx: int, coords: np.ndarray)->float:
 
 #вычисление части, не зависящей от точек на верхнем слое в методе обратной характеристики
 @jit('float64[:](float64[:], float64[:], int64[:,:], float64[:])', nopython=True, parallel=True)
-def fill_C(u1: np.ndarray, u2: np.ndarray, dots_arr: np.ndarray, P_arr: np.ndarray)->np.ndarray:
-    C = np.zeros(u1.size-1)
-    for i in range(C.size):
+def fill_C(u1: np.ndarray, u2: np.ndarray, dots_arr: np.ndarray, P_arr: np.ndarray) -> np.ndarray:
+    C = np.zeros(u1.size - 1, dtype=np.float64)
+    for i in prange(C.size):
         dots = dots_arr[i]
         u1_i = u1[dots]
         u2_i = u2[dots]
-        for j in range(dots.size):
-            C[i] += u1_i[j] * P_arr[j]
-            C[i] += u2_i[j] * P_arr[dots.size + j]
+        C[i] = np.sum(u1_i * P_arr[:dots.size]) + np.sum(u2_i * P_arr[dots.size:2 * dots.size])
     return C
 
 
@@ -46,7 +44,10 @@ def fill_C(u1: np.ndarray, u2: np.ndarray, dots_arr: np.ndarray, P_arr: np.ndarr
 def fill_dots_arr(n: int)->np.ndarray:
     dots_arr = np.zeros((n, 4), dtype=int64)
     for i in range(n):
-        dots_arr[i] = np.arange(i - 2, i + 2, dtype=int64) % n
+        dots_arr[i, 0] = (i - 2) % n
+        dots_arr[i, 1] = (i - 1) % n
+        dots_arr[i, 2] = i % n
+        dots_arr[i, 3] = (i + 1) % n
     return dots_arr
 
 
@@ -58,6 +59,15 @@ def fill_matrix(n: int, u_shift: int, u3_P: np.ndarray)->np.ndarray:
         for k in range(5):
             u_matrix[i, (i - 2 + k)%n] = -u3_P[k]
         u_matrix[i, (i+u_shift)%n] = 1
+    return u_matrix
+
+
+@jit('float64[:](int64, int64, float64[:])', nopython=True, parallel=True)
+def fill_matrix_col(n: int, u_shift: int, u3_P: np.ndarray)->np.ndarray:
+    u_matrix = np.zeros(n, dtype=float64)
+    for k in range(4):
+        u_matrix[-(- 2 + k)%n] = -u3_P[k]
+    u_matrix[-u_shift%n] = 1
     return u_matrix
 
 
@@ -93,19 +103,34 @@ def scheme_step(u1: np.ndarray, u2: np.ndarray, scheme: np.ndarray, r: float, h:
     if third_level_cnt == 1:
         for _ in range(STEPS):
             C = fill_C(u1, u2, dots_arr, P_arr)
-            u3 = np.roll(C, u_shift)
-            u3 = np.append(u3, u3[0])
+            u3 = fast_roll(C, u_shift)  # так быстрее
+            # u3 = np.roll(C, u_shift)
+            u3 = np.concatenate((u3, [u3[0]]))  # так быстрее
+            # u3 = np.append(u3, u3[0])
             u1 = np.copy(u2)
             u2 = np.copy(u3)
     else:
-        u_matrix = fill_matrix(u3.size, u_shift, P_arr[8:])
-        for step in range(STEPS):
+        u_matrix = fill_matrix_col(u3.size, u_shift, P_arr[8:])
+        #u_matrix = fill_matrix(u3.size, u_shift, P_arr[8:])
+
+        for _ in range(STEPS):
             C = fill_C(u1,u2,dots_arr,P_arr)
-            u3 = np.linalg.solve(u_matrix, C)
+            u3 = scipy.linalg.solve_circulant(u_matrix, C, singular='lstsq')
+            #u3 = np.linalg.solve(u_matrix, C)
             u3 = np.append(u3, u3[0])
             u1 = np.copy(u2)
             u2 = np.copy(u3)
     return u1, u2
+
+
+# так быстрее сдвигается в 5 раз
+def fast_roll(arr: np.ndarray, shift: int) -> np.ndarray:
+    """Быстрый циклический сдвиг массива с использованием срезов."""
+    n = arr.size
+    shift = shift % n
+    if shift == 0:
+        return arr
+    return np.concatenate((arr[-shift:], arr[:-shift]))
 
 
 @jit('float64[:](float64, float64, int64, int64, float64, float64)', nopython=True)
@@ -137,13 +162,13 @@ if __name__ == '__main__':
                             [False, False, True, False]])
     test_method(laying_L, 1, [U2, r, h, 100])
     test_method(scheme_step, 2, [U2, U2, test_scheme1, r, h, 100])
-    test_method(analytical_solution, 1, [r, h, 300, 100, (0, X_MAX), double_gauss_func, 5])
+    #test_method(analytical_solution, 1, [r, h, 300, 100, (0, X_MAX), double_gauss_func, 5])
 
 
     U1_test2 = U2
     U2_test2 = laying_L(U2, r, h, 1)
-    test_scheme2 = np.array([[ True,  True,  True, False],
-                            [False,  True,  True, False],
-                            [False, False,  True, False]])
-    test_method(stairs_step, 2, [U1_test2, U2_test2, r, h, 100])
-    test_method(scheme_step, 2, [U2, U2_test2, test_scheme2, r, h, 100])
+    test_scheme2 = np.array([[ False,  False,  False, False],
+                            [True,  True,  False, False],
+                            [False, True,  True, False]])
+    test_method(stairs_step, 2, [U1_test2, U2_test2, r, h, 1])
+    test_method(scheme_step, 2, [U2, U2_test2, test_scheme2, r, h, 1])
